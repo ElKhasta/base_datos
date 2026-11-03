@@ -1,0 +1,64 @@
+/* =====================================================================
+   Estilos base del proyecto.
+   Bootstrap hace el 80%; aquí van los ajustes de identidad visual.
+   ===================================================================== */
+
+:root {
+  --marca: #6d28d9;
+  --marca-oscura: #4c1d95;
+  --fondo: #f6f5fb;
+}
+
+body {
+  background-color: var(--fondo);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+.navbar-marca {
+  background: linear-gradient(135deg, var(--marca-oscura), var(--marca));
+}
+
+.navbar-marca .navbar-brand,
+.navbar-marca .nav-link {
+  color: #fff;
+}
+
+.navbar-marca .nav-link:hover,
+.navbar-marca .nav-link.active {
+  color: #ddd6fe;
+}
+
+.tarjeta-metrica {
+  border: 0;
+  border-radius: 0.9rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tarjeta-metrica:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.6rem 1.4rem rgba(76, 29, 149, 0.15) !important;
+}
+
+.tarjeta-metrica .valor {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tabla-datos {
+  background: #fff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.badge-estado {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cargando {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #6b7280;
+}

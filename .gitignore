@@ -1,0 +1,13 @@
+# Entorno de Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+
+# Configuracion local (contiene la contrasena de la BD)
+backend/.env
+
+# Editores / sistema
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
