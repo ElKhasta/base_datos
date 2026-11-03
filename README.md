@@ -3,7 +3,7 @@
 Proyecto escolar: base de datos relacional en **PostgreSQL 18** + **API REST en Python** + sitio web en **HTML/CSS/Bootstrap/JS**.
 
 ```
-Proyecto predeterminado/
+base_datos/
 ├── backend/          API en Python (FastAPI + psycopg)
 ├── frontend/         Sitio web (Bootstrap + JS)
 ├── sql/              Esquema, datos, consultas y prueba del proceso

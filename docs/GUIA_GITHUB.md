@@ -1,9 +1,9 @@
 # Cómo compartir el proyecto con el equipo (GitHub)
 
-## Antes de empezar: saca el proyecto de OneDrive
+## Antes de empezar: la carpeta de OneDrive
 
-**Muy recomendado.** El proyecto está dentro de `OneDrive\Documents`. Eso trae
-tres problemas:
+El proyecto vive en `C:\Users\casta\OneDrive\Documents\base_datos`. Funciona,
+pero OneDrive trae tres problemas:
 
 1. El entorno virtual `.venv` tiene **miles de archivos**; OneDrive los sube
    todos y la carpeta se vuelve lentísima.
@@ -11,15 +11,15 @@ tres problemas:
 3. Si dos personas modifican a la vez, OneDrive crea copias
    `archivo (1).py` en lugar de conflictos claros de Git.
 
-Mueve la carpeta a algo como `C:\dev\renta-equipos` y **vuelve a crear el
-entorno** (las rutas internas del venv son absolutas):
+**Es opcional, pero recomendado** moverlo fuera de OneDrive. Si lo haces,
+vuelve a crear el entorno (las rutas internas del venv son absolutas):
 
 ```powershell
 # 1. Mueve la carpeta
-Move-Item "C:\Users\casta\OneDrive\Documents\Proyecto predeterminado" "C:\dev\renta-equipos"
+Move-Item "C:\Users\casta\OneDrive\Documents\base_datos" "C:\dev\base_datos"
 
 # 2. Recrea el entorno
-cd C:\dev\renta-equipos\backend
+cd C:\dev\base_datos\backend
 Remove-Item .venv -Recurse -Force
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -59,19 +59,22 @@ Sí se sube `backend/.env.example`, que es la plantilla sin contraseña.
 ### 2.2 En tu computadora
 
 ```powershell
-cd C:\dev\renta-equipos
+cd C:\Users\casta\OneDrive\Documents\base_datos
 
-git init
-git add .
-git commit -m "Estructura inicial: base de datos, API y sitio"
-
+git remote add origin https://github.com/TU-USUARIO/base_datos.git
 git branch -M main
-git remote add origin https://github.com/TU-USUARIO/renta-equipos.git
 git push -u origin main
 ```
 
-Git pedirá autenticación. La contraseña normal **no funciona**; hay que usar un
-*Personal Access Token*:
+> El repositorio local y el primer commit **ya están creados**. Solo faltan
+> estas tres líneas: `git init`, `git add` y `git commit` ya se ejecutaron.
+
+Al hacer `push`, Git abre una ventana del navegador para iniciar sesión en
+GitHub (Git Credential Manager). Inicia sesión y autoriza; no necesitas escribir
+contraseña en la terminal.
+
+Si en lugar del navegador te pide usuario y contraseña, la contraseña normal
+**no funciona**: hay que usar un *Personal Access Token*:
 
 1. GitHub → tu foto → **Settings** → **Developer settings**
 2. **Personal access tokens** → **Tokens (classic)** → **Generate new token**

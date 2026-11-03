@@ -60,9 +60,9 @@ Esta instalación se hace **una sola vez**.
 
 Se abre una ventana azul ubicada ya en la carpeta correcta.
 
-> **Importante:** si escribes la ruta a mano, debe ir entre comillas porque el
-> nombre de la carpeta tiene un espacio:
-> `cd "C:\Users\casta\OneDrive\Documents\Proyecto predeterminado"`
+> **Importante:** si escribes la ruta a mano:
+> `cd "C:\Users\casta\OneDrive\Documents\base_datos"`
+> (las comillas solo son necesarias si la ruta tiene espacios).
 
 ### 3.2 Habilitar la ejecución de scripts (solo la primera vez)
 
