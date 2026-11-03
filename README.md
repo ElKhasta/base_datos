@@ -137,6 +137,8 @@ La disponibilidad no se guarda en una columna: se calcula con la vista `v_equipo
 
 | Documento | Contenido |
 |---|---|
+| `docs/MANUAL_DESDE_CERO.md` | **Manual para reconstruir todo desde cero**, fase por fase, con checkpoints |
+| `docs/RUTA_APRENDIZAJE.md` | Qué estudiar y en qué orden, y cómo auditar código (incluido el de una IA) |
 | `docs/MANUAL_USUARIO.md` | Manual de usuario del sitio, con capturas y solución de problemas |
 | `docs/COMO_FUNCIONA.md` | Explicación técnica: cómo funciona cada parte y por qué |
 | `docs/API.md` | Contrato de endpoints para el equipo de frontend |
