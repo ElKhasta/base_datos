@@ -109,11 +109,18 @@ Debe terminar con `RESULTADO: todas las pruebas pasaron`.
 - `backend/app/routers/` — un archivo por entidad
 
 ### Frontend
-- `frontend/index.html` — pantalla de ejemplo (ya consume la API)
-- `frontend/assets/js/api.js` — **cliente HTTP listo para usar** (`Api.clientes.listar()`, etc.)
-- `frontend/assets/css/estilos.css` — estilos base
+- `frontend/index.html` — panel general (métricas, últimas rentas, disponibilidad)
+- `frontend/clientes.html` — alta, edición, baja lógica e historial
+- `frontend/equipos.html` — inventario y catálogo de categorías
+- `frontend/rentas.html` — proceso central: crear renta, pagos y devoluciones
+- `frontend/reportes.html` — 7 reportes con JOIN, filtros y agrupaciones
+- `frontend/assets/js/api.js` — cliente HTTP (`Api.clientes.listar()`, etc.)
+- `frontend/assets/js/comun.js` — navbar, footer, toasts, formatos y helpers
+- `frontend/assets/js/paginas/` — un archivo por pantalla
+- `frontend/assets/css/estilos.css` — identidad visual y estilos de impresión
 
-El contrato completo de endpoints está en **`docs/API.md`**.
+El contrato completo de endpoints está en **`docs/API.md`** y la guía para
+trabajar el diseño sin romper nada, en **`docs/FRONTEND.md`**.
 
 ---
 
@@ -142,6 +149,7 @@ La disponibilidad no se guarda en una columna: se calcula con la vista `v_equipo
 | `docs/MANUAL_USUARIO.md` | Manual de usuario del sitio, con capturas y solución de problemas |
 | `docs/COMO_FUNCIONA.md` | Explicación técnica: cómo funciona cada parte y por qué |
 | `docs/API.md` | Contrato de endpoints para el equipo de frontend |
+| `docs/FRONTEND.md` | **Guía del frontend**: estructura, clases, cómo personalizar el diseño y agregar pantallas |
 | `docs/EVIDENCIA.md` | Modelo relacional, diagrama ER, álgebra relacional |
 | `docs/GUIA_GITHUB.md` | Cómo subir el proyecto y trabajar en equipo |
 

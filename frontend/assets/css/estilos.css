@@ -1,19 +1,41 @@
 /* =====================================================================
-   Estilos base del proyecto.
-   Bootstrap hace el 80%; aquí van los ajustes de identidad visual.
+   Identidad visual del proyecto
+   ---------------------------------------------------------------------
+   Bootstrap hace el 80%. Aquí solo van los ajustes de marca y los
+   detalles que Bootstrap no trae (barras de reportes, tablas, impresión).
    ===================================================================== */
 
 :root {
   --marca: #6d28d9;
   --marca-oscura: #4c1d95;
+  --marca-clara: #ede9fe;
   --fondo: #f6f5fb;
+  --borde: #e5e7eb;
+  --texto-suave: #6b7280;
+  --exito: #059669;
+  --peligro: #dc2626;
+  --radio: 0.9rem;
 }
 
+/* --------------------------------- Base --------------------------------- */
 body {
   background-color: var(--fondo);
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #111827;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
+main {
+  flex: 1 0 auto;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* -------------------------------- Navbar -------------------------------- */
 .navbar-marca {
   background: linear-gradient(135deg, var(--marca-oscura), var(--marca));
 }
@@ -23,14 +45,56 @@ body {
   color: #fff;
 }
 
+.navbar-marca .nav-link {
+  border-radius: 0.5rem;
+  padding-inline: 0.75rem;
+  transition: background-color 0.15s ease;
+}
+
 .navbar-marca .nav-link:hover,
 .navbar-marca .nav-link.active {
-  color: #ddd6fe;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.navbar-marca .nav-docs {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  font-size: 0.875rem;
+}
+
+.navbar-marca .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* -------------------------------- Encabezado -------------------------------- */
+.encabezado-pagina {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.encabezado-pagina h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.encabezado-pagina .subtitulo {
+  color: var(--texto-suave);
+  font-size: 0.925rem;
+  margin: 0.2rem 0 0;
+}
+
+/* --------------------------------- Tarjetas --------------------------------- */
+.card {
+  border: 0;
+  border-radius: var(--radio);
 }
 
 .tarjeta-metrica {
-  border: 0;
-  border-radius: 0.9rem;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -42,23 +106,225 @@ body {
 .tarjeta-metrica .valor {
   font-size: 1.9rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
 }
 
+.tarjeta-metrica .icono {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--marca-clara);
+  color: var(--marca);
+  font-size: 1.25rem;
+  flex: 0 0 auto;
+}
+
+.tarjeta-accion {
+  display: block;
+  height: 100%;
+  color: inherit;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: #fff;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.tarjeta-accion:hover {
+  border-color: var(--marca);
+  transform: translateY(-2px);
+  color: var(--marca);
+}
+
+.tarjeta-accion .icono {
+  font-size: 1.5rem;
+  color: var(--marca);
+}
+
+/* ---------------------------------- Tablas ---------------------------------- */
 .tabla-datos {
   background: #fff;
-  border-radius: 0.75rem;
-  overflow: hidden;
+  margin-bottom: 0;
 }
 
+.tabla-datos thead th {
+  background: #faf9fe;
+  color: #4b5563;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.tabla-datos td,
+.tabla-datos th {
+  vertical-align: middle;
+}
+
+.tabla-datos tbody tr:hover {
+  background-color: #fbfaff;
+}
+
+.acciones-tabla {
+  white-space: nowrap;
+}
+
+.acciones-tabla .btn {
+  --bs-btn-padding-y: 0.2rem;
+  --bs-btn-padding-x: 0.45rem;
+  --bs-btn-font-size: 0.8rem;
+}
+
+.celda-principal {
+  font-weight: 600;
+}
+
+.celda-secundaria {
+  color: var(--texto-suave);
+  font-size: 0.82rem;
+}
+
+/* ---------------------------------- Badges ---------------------------------- */
 .badge-estado {
   font-weight: 600;
   letter-spacing: 0.02em;
+  padding: 0.4em 0.65em;
 }
 
-.cargando {
+.badge-suave {
+  background: var(--marca-clara);
+  color: var(--marca-oscura);
+  font-weight: 600;
+}
+
+/* ----------------------------- Barras de reportes ----------------------------- */
+.barra {
+  background: #f1f0f7;
+  border-radius: 999px;
+  height: 0.55rem;
+  overflow: hidden;
+  min-width: 90px;
+}
+
+.barra > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--marca), #a78bfa);
+  transition: width 0.4s ease;
+}
+
+/* ------------------------------- Formularios ------------------------------- */
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.form-text {
+  font-size: 0.8rem;
+}
+
+.requerido::after {
+  content: " *";
+  color: var(--peligro);
+}
+
+/* ------------------------------- Carrito ------------------------------- */
+.carrito-vacio {
+  text-align: center;
+  color: var(--texto-suave);
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--borde);
+  border-radius: 0.65rem;
+}
+
+.resumen-total {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: #6b7280;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.75rem 1rem;
+  background: var(--marca-clara);
+  border-radius: 0.65rem;
+}
+
+.resumen-total .monto {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--marca-oscura);
+}
+
+/* ------------------------------- Offcanvas ------------------------------- */
+@media (min-width: 992px) {
+  .offcanvas-detalle {
+    width: 680px;
+  }
+}
+
+.dato-detalle dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+
+.dato-detalle dd {
+  margin-bottom: 0.75rem;
+}
+
+/* --------------------------------- Varios --------------------------------- */
+.pie-pagina {
+  background: #fff;
+  border-top: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.spinner-border-sm {
+  vertical-align: -0.125em;
+}
+
+.texto-mono {
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.82rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.solo-print {
+  display: none;
+}
+
+/* -------------------------------- Impresión -------------------------------- */
+@media print {
+  .navbar,
+  .pie-pagina,
+  .no-print,
+  .toast-container,
+  .btn {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+  }
+
+  .solo-print {
+    display: block;
+  }
 }

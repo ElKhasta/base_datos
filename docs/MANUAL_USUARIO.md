@@ -11,12 +11,13 @@ Versión 1.0 · Noviembre 2026
 2. [Requisitos](#2-requisitos)
 3. [Instalación paso a paso](#3-instalación-paso-a-paso)
 4. [Cómo iniciar el sistema](#4-cómo-iniciar-el-sistema)
-5. [Pantalla principal](#5-pantalla-principal)
+5. [Recorrido por el sitio](#5-recorrido-por-el-sitio)
 6. [Registrar una renta](#6-registrar-una-renta)
-7. [Consultar los reportes](#7-consultar-los-reportes)
-8. [Registrar una devolución](#8-registrar-una-devolución)
-9. [Solución de problemas](#9-solución-de-problemas)
-10. [Glosario](#10-glosario)
+7. [Cobrar una renta](#7-cobrar-una-renta)
+8. [Devolver los equipos](#8-devolver-los-equipos)
+9. [Consultar los reportes](#9-consultar-los-reportes)
+10. [Solución de problemas](#10-solución-de-problemas)
+11. [Glosario](#11-glosario)
 
 ---
 
@@ -139,18 +140,17 @@ Para **detener** el servidor: vuelve a la ventana de PowerShell y presiona
 
 ---
 
-## 5. Pantalla principal
+## 5. Recorrido por el sitio
 
 ![Pantalla principal del sistema](img/01-panel-principal.jpeg)
 
-La pantalla se divide en tres partes:
+La barra superior está siempre visible y lleva a las cinco secciones del
+sistema. A la derecha está el acceso **API**, que abre la documentación técnica
+(Swagger); ese enlace es para el equipo de desarrollo, no para el usuario final.
 
-### 5.1 Barra de navegación (arriba)
+### 5.1 Panel general (Inicio)
 
-Contiene el logotipo **RentaVisual** y los accesos a las secciones: Inicio,
-Clientes, Equipos, Rentas y Reportes.
-
-### 5.2 Tarjetas de resumen
+Es la primera pantalla y resume el estado del negocio:
 
 | Tarjeta | Qué muestra |
 |---|---|
@@ -159,131 +159,136 @@ Clientes, Equipos, Rentas y Reportes.
 | **Equipos fuera** | Renglones de equipo que aún no se devuelven |
 | **Ingresos cobrados** | Suma de todos los pagos registrados |
 
-Estas cifras se calculan en el momento, no están guardadas: si registras una
-renta, cambian de inmediato.
+Debajo hay tres tarjetas de aviso: **rentas vencidas** y **equipos agotados**
+(cada una con un botón que lleva al reporte correspondiente) y el **monto total
+rentado**. Más abajo aparecen los accesos rápidos, las **últimas rentas** (el
+folio abre el detalle) y la **disponibilidad** de cada equipo.
 
-### 5.3 Tabla de inventario
+Todas las cifras se calculan en el momento; no están guardadas. El botón
+**Recargar** vuelve a consultar la base de datos.
 
-| Columna | Significado |
-|---|---|
-| **Equipo** | Nombre del artículo |
-| **Marca** | Fabricante |
-| **Categoría** | Audio, Video o Iluminación |
-| **Precio/día** | Tarifa de renta por día |
-| **Stock** | Unidades totales que posee la empresa |
-| **Disponible** | Unidades libres **ahora** |
+### 5.2 Clientes
 
-El número verde de **Disponible** es la diferencia entre el stock y lo que está
-rentado sin devolver. Si llega a cero, el equipo no se puede rentar hasta que
-regrese.
+Permite buscar por nombre, teléfono o correo, filtrar activos/inactivos y ver
+cuántos clientes hay. Con **Nuevo cliente** se registra una persona (nombre
+obligatorio de al menos 3 caracteres; teléfono y correo opcionales).
+
+Cada fila tiene tres acciones:
+
+- **Historial** (reloj): muestra todas las rentas de ese cliente.
+- **Editar** (lápiz): corrige sus datos.
+- **Baja / Reactivar**: la baja es **lógica**. El cliente deja de poder rentar,
+  pero su historial se conserva y puede reactivarse después.
+
+### 5.3 Equipos
+
+Muestra el inventario con precio por día, stock, unidades rentadas y unidades
+**disponibles**. Se puede buscar por nombre o marca, filtrar por categoría y
+marcar **Solo disponibles**.
+
+Con **Nuevo equipo** se captura categoría, nombre, marca, precio y stock. El
+botón **Categorías** abre el catálogo para crear, editar o eliminar categorías;
+una categoría con equipos asignados no se puede borrar hasta reasignarlos.
+
+> **Disponible** = stock − unidades en rentas activas o reservadas sin devolver.
+> Se calcula con la vista `v_equipo_disponible` en cada consulta; no es una
+> columna que pueda desincronizarse.
+
+### 5.4 Rentas
+
+Es el proceso central. La tabla muestra folio, cliente, periodo, estado, total,
+pagado, saldo y líneas pendientes de devolución. Arriba se puede filtrar por
+estado y por cliente, y el botón **Detalle** abre un panel lateral con todo el
+contrato.
 
 ---
 
 ## 6. Registrar una renta
 
-Mientras las pantallas del sitio terminan de desarrollarse, el proceso se
-registra desde la documentación interactiva de la API.
+1. Entra a **Rentas** y pulsa **Nueva renta** (o el botón del panel general).
+2. Elige un **cliente activo**. Si no aparece, primero regístralo en Clientes.
+3. Confirma la **fecha de inicio** y el **fin estimado**. Los días se calculan
+   solos y el fin no puede ser anterior al inicio.
+4. Elige el **estado inicial**:
+   - **Activa**: el equipo sale del inventario hoy.
+   - **Reservada**: queda apartado sin entregarse.
+5. Selecciona un equipo (solo aparecen los que tienen unidades libres), indica
+   la cantidad y pulsa **Agregar**. Repite para cada equipo de la renta.
+6. En el carrito puedes cambiar la cantidad o quitar un renglón. El resumen de la
+   derecha muestra días, líneas, unidades y **total estimado**.
+7. Pulsa **Crear renta**.
 
-### 6.1 Abrir la documentación
+Al guardar, el servidor verifica otra vez que el cliente esté activo, que haya
+stock suficiente y calcula el total con el precio **de la base de datos** (el
+navegador no envía precios). Si algo falla, aparece el motivo y **no se guarda
+nada**; por ejemplo:
 
-Entra a **http://localhost:8000/docs**
+> *Stock insuficiente de 'Proyector 4K': se pidieron 3 y solo hay 1 disponibles*
 
-![Documentación interactiva de la API](img/02-swagger.jpeg)
+Si todo sale bien, el panel de detalle se abre con el folio asignado y el total.
 
-### 6.2 Pasos
+---
 
-1. Despliega **`POST /api/rentas`** y pulsa **Try it out**.
-2. Reemplaza el contenido por los datos de la renta:
+## 7. Cobrar una renta
 
-```json
-{
-  "id_cliente": 2,
-  "fecha_inicio": "2026-11-03",
-  "fecha_fin_estimada": "2026-11-06",
-  "detalles": [
-    { "id_equipo": 1, "cantidad": 2 },
-    { "id_equipo": 3, "cantidad": 1 }
-  ]
-}
-```
+Desde el detalle de la renta, pulsa **Registrar pago**:
 
-| Campo | Significado |
+1. El monto aparece precargado con el **saldo pendiente**; puedes reducirlo para
+   registrar un abono.
+2. Elige el método: **Efectivo**, **Tarjeta** o **Transferencia**.
+3. Pulsa **Registrar**.
+
+El pago queda en la lista de la renta y el saldo se actualiza. Cuando el saldo
+llega a cero, la columna **Pagado** muestra la etiqueta verde *Pagado*. El
+sistema no permite cobrar más de lo que se debe.
+
+---
+
+## 8. Devolver los equipos
+
+1. Abre el detalle de la renta.
+2. En la tabla de equipos, marca las casillas de los renglones que regresan y
+   pulsa **Devolver seleccionados**; si regresa todo, usa **Devolver todo**.
+3. Confirma la operación.
+
+El sistema guarda la fecha de devolución y repone las unidades al inventario de
+inmediato. Cuando ya no queda ningún renglón pendiente, la renta pasa sola a
+estado **Finalizada**.
+
+El bloque **Cambiar estado** sirve para corregir manualmente una renta
+(Reservada, Activa, Finalizada o Cancelada). **Eliminar renta** borra el
+contrato con sus pagos y detalles; si solo quieres anularla conservando el
+historial, cámbiala a **Cancelada** en lugar de borrarla.
+
+---
+
+## 9. Consultar los reportes
+
+Entra a **Reportes**. Arriba están las tarjetas de resumen y debajo siete
+pestañas; cada una indica con una etiqueta la técnica SQL que usa (JOIN, filtro,
+GROUP BY…).
+
+| Pestaña | Para qué sirve |
 |---|---|
-| `id_cliente` | Cliente que renta |
-| `fecha_inicio` | Día de entrega (formato AAAA-MM-DD) |
-| `fecha_fin_estimada` | Día de devolución pactado |
-| `detalles` | Lista de equipos y cantidades |
+| **Pendientes** | Saber qué equipo no ha regresado, quién lo tiene y si ya se retrasó |
+| **Ingresos** | Qué categoría de producto deja más dinero, con barras de participación |
+| **Estados** | Cuántas rentas hay en cada estado, incluidas las que están en cero |
+| **Inventario bajo** | Equipos con menos stock del límite que indiques (5 por omisión) |
+| **Vencidas** | Contratos activos o reservados cuya fecha fin ya pasó |
+| **Top clientes** | Ranking por monto rentado, con el número de rentas de cada uno |
+| **Historial** | Todo lo que ha rentado un cliente que elijas en la lista |
 
-3. Pulsa **Execute**.
+Los porcentajes de las barras se calculan sobre el total de la columna, y los
+totales nunca se guardan: se agrupan en el momento con SQL. El botón
+**Imprimir** genera una hoja limpia (sin menús ni botones), y **Actualizar**
+vuelve a consultar la base.
 
-### 6.3 Qué hace el sistema
-
-- Verifica que el cliente exista y esté activo.
-- Revisa que haya unidades disponibles de **cada** equipo.
-- Toma el precio de la base de datos (nunca del formulario).
-- Calcula `subtotal = cantidad × precio por día × días`.
-- Guarda la renta y todos sus renglones **de una sola vez**.
-
-Si algo falla, responde con un mensaje como:
-
-```json
-{
-  "detail": "Stock insuficiente de 'Proyector 4K': se pidieron 3 y solo hay 1 disponibles"
-}
-```
-
-y **no guarda nada**. Esto evita rentas a medias.
-
-### 6.4 Resultado
-
-La respuesta (código `201`) incluye el folio asignado, el total calculado y el
-detalle. A partir de ese momento el equipo aparece descontado en la columna
-**Disponible**.
+> Desde el panel general, los botones **Ver** de *rentas vencidas* e *inventario
+> agotado* abren directamente la pestaña correspondiente.
 
 ---
 
-## 7. Consultar los reportes
-
-Los reportes se consultan en **http://localhost:8000/docs**, sección
-**Reportes**.
-
-| Reporte | Ruta | Para qué sirve |
-|---|---|---|
-| Pendientes de devolución | `GET /api/reportes/pendientes-devolucion` | Saber qué equipo no ha regresado y a quién reclamarle |
-| Rentas vencidas | `GET /api/reportes/rentas-vencidas` | Contratos pasados de fecha con equipo aún fuera |
-| Ingresos por categoría | `GET /api/reportes/ingresos-por-categoria` | Qué línea de producto deja más dinero |
-| Rentas por estado | `GET /api/reportes/rentas-por-estado` | Cuántas reservadas, activas, finalizadas y canceladas hay |
-| Inventario bajo | `GET /api/reportes/inventario-bajo` | Equipos con pocas unidades en total |
-| Historial de un cliente | `GET /api/reportes/historial-cliente/{id}` | Todo lo que ha rentado una persona |
-| Top clientes | `GET /api/reportes/top-clientes` | Quién renta más y cuánto ha gastado |
-
-Para usar uno: despliégalo → **Try it out** → **Execute** → revisa el
-**Response body**.
-
----
-
-## 8. Registrar una devolución
-
-1. En `GET /api/rentas` localiza el folio (`id_renta`) que deseas cerrar.
-2. Despliega **`POST /api/rentas/{id_renta}/devoluciones`**, pulsa
-   **Try it out**.
-3. Escribe el folio en el campo `id_renta`.
-4. En el cuerpo, deja `{}` para devolver **todo** lo pendiente, o indica las
-   líneas concretas:
-
-```json
-{ "id_detalles": [1, 2] }
-```
-
-5. Pulsa **Execute**.
-
-El sistema guarda la fecha de devolución, repone las unidades al inventario y,
-si ya no queda nada pendiente, cambia la renta a estado **Finalizada**
-automáticamente.
-
----
-
-## 9. Solución de problemas
+## 10. Solución de problemas
 
 | Mensaje o síntoma | Causa | Solución |
 |---|---|---|
@@ -300,7 +305,7 @@ automáticamente.
 
 ---
 
-## 10. Glosario
+## 11. Glosario
 
 - **API**: puerta de entrada al sistema; recibe peticiones y devuelve datos.
 - **Backend**: programa en Python que valida las reglas y habla con la base.

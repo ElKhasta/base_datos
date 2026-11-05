@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rentas · RentaVisual</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="assets/css/estilos.css" rel="stylesheet" />
+</head>
+<body data-pagina="rentas">
+
+  <div id="app-navbar"></div>
+
+  <main class="container py-4">
+
+    <div class="encabezado-pagina">
+      <div>
+        <h1>Rentas</h1>
+        <p class="subtitulo">Proceso central: alta de renta, pagos y devoluciones.</p>
+      </div>
+      <button class="btn btn-primary no-print" id="btnNuevaRenta">
+        <i class="bi bi-plus-lg me-1"></i>Nueva renta
+      </button>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-6 col-md-4 col-lg-3">
+            <select class="form-select" id="filtroEstado">
+              <option value="">Todos los estados</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-5 col-lg-4">
+            <select class="form-select" id="filtroCliente">
+              <option value="">Todos los clientes</option>
+            </select>
+          </div>
+          <div class="col-12 col-lg-5 text-lg-end d-flex justify-content-between justify-content-lg-end gap-2">
+            <span class="badge badge-suave align-self-center" id="contadorRentas">—</span>
+            <button class="btn btn-outline-secondary btn-sm" id="btnRecargarRentas">
+              <i class="bi bi-arrow-clockwise me-1"></i>Recargar
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle tabla-datos">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Cliente</th>
+                <th>Periodo</th>
+                <th>Estado</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">Pagado</th>
+                <th class="text-end">Saldo</th>
+                <th class="text-center">Pendientes</th>
+                <th class="text-end no-print">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaRentas">
+              <tr><td colspan="9" class="text-center py-4 text-muted">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="app-footer"></div>
+
+  <!-- ===================== Modal nueva renta ===================== -->
+  <div class="modal fade" id="modalNuevaRenta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+      <form class="modal-content" id="formRenta" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-clipboard-plus me-2"></i>Nueva renta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-4">
+
+            <!-- Datos generales + carrito -->
+            <div class="col-lg-7">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label requerido" for="rentaCliente">Cliente</label>
+                  <select class="form-select" id="rentaCliente" required>
+                    <option value="">Selecciona un cliente activo…</option>
+                  </select>
+                  <div class="invalid-feedback">Selecciona un cliente.</div>
+                </div>
+
+                <div class="col-6">
+                  <label class="form-label requerido" for="rentaInicio">Fecha de inicio</label>
+                  <input type="date" class="form-control" id="rentaInicio" required />
+                </div>
+                <div class="col-6">
+                  <label class="form-label requerido" for="rentaFin">Fin estimado</label>
+                  <input type="date" class="form-control" id="rentaFin" required />
+                  <div class="invalid-feedback">No puede ser anterior al inicio.</div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label" for="rentaEstado">Estado inicial</label>
+                  <select class="form-select" id="rentaEstado">
+                    <option value="Activa">Activa (sale del inventario hoy)</option>
+                    <option value="Reservada">Reservada (aparta sin entregar)</option>
+                  </select>
+                </div>
+              </div>
+
+              <hr class="my-4" />
+
+              <label class="form-label">Equipos</label>
+              <div class="row g-2 mb-3">
+                <div class="col-12 col-md-7">
+                  <select class="form-select" id="equipoSelect">
+                    <option value="">Selecciona un equipo disponible…</option>
+                  </select>
+                </div>
+                <div class="col-5 col-md-2">
+                  <input type="number" class="form-control" id="equipoCantidad"
+                         min="1" step="1" value="1" aria-label="Cantidad" />
+                </div>
+                <div class="col-7 col-md-3 d-grid">
+                  <button type="button" class="btn btn-outline-primary" id="btnAgregarEquipo">
+                    <i class="bi bi-plus-lg me-1"></i>Agregar
+                  </button>
+                </div>
+              </div>
+
+              <div id="carritoVacio" class="carrito-vacio">
+                <i class="bi bi-cart-x fs-3 d-block mb-1"></i>
+                Todavía no has agregado equipos a la renta.
+              </div>
+
+              <div class="table-responsive d-none" id="carritoContenedor">
+                <table class="table align-middle tabla-datos">
+                  <thead>
+                    <tr>
+                      <th>Equipo</th>
+                      <th class="text-end">Precio/día</th>
+                      <th class="text-center" style="width: 90px;">Cant.</th>
+                      <th class="text-end">Subtotal</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="carrito"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="col-lg-5">
+              <div class="card bg-white border h-100">
+                <div class="card-body">
+                  <h6 class="text-uppercase text-muted small fw-bold mb-3">Resumen</h6>
+
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Días de renta</span>
+                    <strong id="resumenDias">1</strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Líneas</span>
+                    <strong id="resumenLineas">0</strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Unidades</span>
+                    <strong id="resumenUnidades">0</strong>
+                  </div>
+
+                  <div class="resumen-total">
+                    <span>Total estimado</span>
+                    <span class="monto" id="resumenTotal">$0.00</span>
+                  </div>
+
+                  <div class="alert alert-light border mt-3 mb-0 small">
+                    <i class="bi bi-shield-check me-1"></i>
+                    El navegador <strong>no envía precios</strong>. El servidor lee el precio
+                    de la tabla <span class="texto-mono">equipo</span>, valida el stock con
+                    <span class="texto-mono">FOR UPDATE</span> y calcula el total dentro de una
+                    sola transacción.
+                  </div>
+
+                  <div class="alert alert-warning mt-3 mb-0 small d-none" id="avisoCarrito"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnCrearRenta">
+            <i class="bi bi-check-lg me-1"></i>Crear renta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== Offcanvas detalle ===================== -->
+  <div class="offcanvas offcanvas-end offcanvas-detalle" tabindex="-1" id="offcanvasDetalle"
+       aria-labelledby="tituloDetalle">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="tituloDetalle">Detalle de la renta</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body" id="detalleContenido">
+      <div class="text-center text-muted py-5">
+        <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== Modal pago ===================== -->
+  <div class="modal fade" id="modalPago" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="formPago" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-cash-coin me-2"></i>Registrar pago</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="pagoRentaId" />
+
+          <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <span>Saldo pendiente</span>
+            <strong id="pagoSaldoTexto">$0.00</strong>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label requerido" for="pagoMonto">Monto</label>
+            <div class="input-group has-validation">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="pagoMonto" required
+                     min="0.01" step="0.01" placeholder="0.00" />
+              <div class="invalid-feedback">Escribe un monto mayor a cero.</div>
+            </div>
+          </div>
+
+          <div class="mb-0">
+            <label class="form-label requerido" for="pagoMetodo">Método de pago</label>
+            <select class="form-select" id="pagoMetodo" required>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success" id="btnGuardarPago">
+            <i class="bi bi-check-lg me-1"></i>Registrar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/comun.js"></script>
+  <script src="assets/js/paginas/rentas.js"></script>
+</body>
+</html>
