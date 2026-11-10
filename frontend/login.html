@@ -62,7 +62,9 @@
             <div id="alertaAuth" class="alert d-none" role="alert"></div>
 
             <!-- Login -->
-            <form id="formLogin" novalidate>
+            <!-- onsubmit="return false": si el usuario pulsa Enter antes de que
+                 cargue login.js, evita que el navegador recargue la página. -->
+            <form id="formLogin" novalidate onsubmit="return false">
               <div class="mb-3">
                 <label class="form-label requerido" for="loginEmail">Correo</label>
                 <div class="input-group">
@@ -90,7 +92,7 @@
             </form>
 
             <!-- Registro -->
-            <form id="formRegistro" class="d-none" novalidate>
+            <form id="formRegistro" class="d-none" novalidate onsubmit="return false">
               <div class="mb-3">
                 <label class="form-label requerido" for="regNombre">Nombre completo</label>
                 <input type="text" class="form-control" id="regNombre" required
