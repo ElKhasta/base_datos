@@ -29,3 +29,24 @@ CORS_ORIGINS = [
 FRONTEND_DIR = Path(
     os.getenv("FRONTEND_DIR", str(BASE_DIR.parent / "frontend"))
 ).resolve()
+
+# ---------------------------------------------------------------------
+# Sesiones y roles
+# ---------------------------------------------------------------------
+# Clave para firmar la cookie de sesion. En produccion debe ser larga y
+# aleatoria; crear_bd.py la genera automaticamente en backend/.env.
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "rentavisual-dev-secret-cambia-esta-clave-en-produccion",
+)
+SESSION_HORAS = int(os.getenv("SESSION_HORAS", "8"))
+COOKIE_SEGURA = os.getenv("COOKIE_SECURE", "false").lower() in ("1", "true", "sí", "si")
+
+# Usuarios iniciales que se crean solos al arrancar la API si no existen.
+# Cambia la contrasena en .env antes de usar el sistema fuera de tu equipo.
+SEMBRAR_USUARIOS = os.getenv("SEMBRAR_USUARIOS", "true").lower() in ("1", "true", "sí", "si")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@rentavisual.mx")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Admin123!")
+DEMO_CLIENTE_ID = int(os.getenv("DEMO_CLIENTE_ID", "1"))
+DEMO_CLIENTE_EMAIL = os.getenv("DEMO_CLIENTE_EMAIL", "luis@rentavisual.mx")
+DEMO_CLIENTE_PASSWORD = os.getenv("DEMO_CLIENTE_PASSWORD", "Cliente123!")

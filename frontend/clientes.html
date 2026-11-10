@@ -8,7 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <link href="assets/css/estilos.css" rel="stylesheet" />
 </head>
-<body data-pagina="clientes">
+<body data-pagina="clientes" data-solo-admin="true">
 
   <div id="app-navbar"></div>
 
@@ -55,13 +55,14 @@
                 <th>Cliente</th>
                 <th>Teléfono</th>
                 <th>Correo</th>
+                <th>Acceso</th>
                 <th>Alta</th>
                 <th>Estatus</th>
                 <th class="text-end no-print">Acciones</th>
               </tr>
             </thead>
             <tbody id="tablaClientes">
-              <tr><td colspan="6" class="text-center py-4 text-muted">Cargando…</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -114,6 +115,56 @@
           <button type="submit" class="btn btn-primary" id="btnGuardarCliente">
             <i class="bi bi-check-lg me-1"></i>Guardar
           </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== Modal acceso al portal ===================== -->
+  <div class="modal fade" id="modalAcceso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="formAcceso" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-key me-2"></i>Acceso al portal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="accesoClienteId" />
+
+          <div class="alert alert-light border small" id="accesoEstado"></div>
+
+          <div class="mb-3">
+            <label class="form-label requerido" for="accesoEmail">Correo de acceso</label>
+            <input type="email" class="form-control" id="accesoEmail" required
+                   autocomplete="off" placeholder="cliente@correo.com" />
+            <div class="invalid-feedback">Escribe un correo válido.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label requerido" for="accesoPassword">Contraseña</label>
+            <input type="password" class="form-control" id="accesoPassword" required
+                   minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+            <div class="form-text" id="accesoPasswordAyuda">
+              Se guarda cifrada con PBKDF2. Compártela con el cliente por un medio seguro.
+            </div>
+          </div>
+
+          <div class="mb-0">
+            <label class="form-label" for="accesoNombre">Nombre para mostrar</label>
+            <input type="text" class="form-control" id="accesoNombre" maxlength="100"
+                   placeholder="Se usa el nombre del cliente si lo dejas vacío" />
+          </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-outline-danger d-none" id="btnRevocarAcceso">
+            <i class="bi bi-key me-1"></i>Revocar acceso
+          </button>
+          <div class="d-flex gap-2 ms-auto">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnGuardarAcceso">
+              <i class="bi bi-check-lg me-1"></i>Guardar acceso
+            </button>
+          </div>
         </div>
       </form>
     </div>

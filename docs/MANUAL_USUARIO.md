@@ -11,13 +11,16 @@ Versión 1.0 · Noviembre 2026
 2. [Requisitos](#2-requisitos)
 3. [Instalación paso a paso](#3-instalación-paso-a-paso)
 4. [Cómo iniciar el sistema](#4-cómo-iniciar-el-sistema)
-5. [Recorrido por el sitio](#5-recorrido-por-el-sitio)
-6. [Registrar una renta](#6-registrar-una-renta)
-7. [Cobrar una renta](#7-cobrar-una-renta)
-8. [Devolver los equipos](#8-devolver-los-equipos)
-9. [Consultar los reportes](#9-consultar-los-reportes)
-10. [Solución de problemas](#10-solución-de-problemas)
-11. [Glosario](#11-glosario)
+5. [Iniciar sesión y roles](#5-iniciar-sesión-y-roles)
+6. [Recorrido por el sitio (administrador)](#6-recorrido-por-el-sitio-administrador)
+7. [Portal del cliente](#7-portal-del-cliente)
+8. [Registrar una renta](#8-registrar-una-renta)
+9. [Aprobar o rechazar solicitudes](#9-aprobar-o-rechazar-solicitudes)
+10. [Cobrar una renta](#10-cobrar-una-renta)
+11. [Devolver los equipos](#11-devolver-los-equipos)
+12. [Consultar los reportes](#12-consultar-los-reportes)
+13. [Solución de problemas](#13-solución-de-problemas)
+14. [Glosario](#14-glosario)
 
 ---
 
@@ -34,6 +37,13 @@ rentas y controla:
 
 El sistema funciona en el navegador y guarda todo en una base de datos
 PostgreSQL. No requiere internet.
+
+Tiene **dos tipos de usuario**:
+
+- **Administrador**: opera todo el negocio (clientes, inventario, rentas,
+  reportes, solicitudes y bitácora).
+- **Cliente**: entra a un portal para ver el catálogo, pedir equipos y seguir
+  sus propias solicitudes.
 
 ---
 
@@ -140,15 +150,65 @@ Para **detener** el servidor: vuelve a la ventana de PowerShell y presiona
 
 ---
 
-## 5. Recorrido por el sitio
+## 5. Iniciar sesión y roles
+
+Al abrir **http://localhost:8000** el sistema pide iniciar sesión.
+
+![Pantalla de inicio de sesión](img/01-panel-principal.jpeg)
+
+### 5.1 Entrar con una cuenta
+
+1. Escribe tu **correo** y **contraseña**.
+2. Pulsa **Entrar**.
+
+El sistema decide a dónde llevarte según tu rol:
+
+| Rol | Pantalla inicial | Ve en el menú |
+|---|---|---|
+| Administrador | Panel general | Inicio, Solicitudes, Clientes, Equipos, Rentas, Reportes, Actividad y API |
+| Cliente | Portal del cliente | Catálogo y Mis solicitudes |
+
+Las cuentas de demostración son:
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Administrador | `admin@rentavisual.mx` | `Admin123!` |
+| Cliente | `luis@rentavisual.mx` | `Cliente123!` |
+
+### 5.2 Crear una cuenta de cliente
+
+En la misma pantalla, pestaña **Crear cuenta**, un cliente nuevo puede
+registrarse con su nombre, correo, teléfono y una contraseña de al menos 8
+caracteres. Al terminar entra directo a su portal.
+
+> Si el correo ya pertenece a un cliente que la empresa tenía registrado, el
+> registro se rechaza: pide al administrador que te otorgue acceso desde
+> **Clientes**. Así nadie se adueña del historial de otra persona.
+
+### 5.3 Cambiar la contraseña y cerrar sesión
+
+En la esquina superior derecha, el menú con tu nombre tiene **Cambiar
+contraseña** y **Cerrar sesión**. Al cerrar, el sistema vuelve al login y borra
+la cookie de sesión.
+
+### 5.4 Si olvidas la contraseña
+
+El cliente debe pedir al administrador que vuelva a guardar su acceso desde
+**Clientes → llave**. El administrador puede asignar una contraseña nueva sin
+perder el historial.
+
+---
+
+## 6. Recorrido por el sitio (administrador)
 
 ![Pantalla principal del sistema](img/01-panel-principal.jpeg)
 
-La barra superior está siempre visible y lleva a las cinco secciones del
-sistema. A la derecha está el acceso **API**, que abre la documentación técnica
-(Swagger); ese enlace es para el equipo de desarrollo, no para el usuario final.
+La barra superior está siempre visible y lleva a las secciones del sistema. A la
+derecha está el acceso **API**, que abre la documentación técnica (Swagger); ese
+enlace es para el equipo de desarrollo, no para el usuario final. El cliente no
+ve ese enlace.
 
-### 5.1 Panel general (Inicio)
+### 6.1 Panel general (Inicio)
 
 Es la primera pantalla y resume el estado del negocio:
 
@@ -167,20 +227,22 @@ folio abre el detalle) y la **disponibilidad** de cada equipo.
 Todas las cifras se calculan en el momento; no están guardadas. El botón
 **Recargar** vuelve a consultar la base de datos.
 
-### 5.2 Clientes
+### 6.2 Clientes
 
 Permite buscar por nombre, teléfono o correo, filtrar activos/inactivos y ver
 cuántos clientes hay. Con **Nuevo cliente** se registra una persona (nombre
 obligatorio de al menos 3 caracteres; teléfono y correo opcionales).
 
-Cada fila tiene tres acciones:
+Cada fila tiene cuatro acciones:
 
+- **Acceso** (llave): crea o actualiza la cuenta del cliente en el portal, o la
+  revoca. La columna **Acceso** indica si ya puede entrar.
 - **Historial** (reloj): muestra todas las rentas de ese cliente.
 - **Editar** (lápiz): corrige sus datos.
 - **Baja / Reactivar**: la baja es **lógica**. El cliente deja de poder rentar,
   pero su historial se conserva y puede reactivarse después.
 
-### 5.3 Equipos
+### 6.3 Equipos
 
 Muestra el inventario con precio por día, stock, unidades rentadas y unidades
 **disponibles**. Se puede buscar por nombre o marca, filtrar por categoría y
@@ -194,16 +256,67 @@ una categoría con equipos asignados no se puede borrar hasta reasignarlos.
 > Se calcula con la vista `v_equipo_disponible` en cada consulta; no es una
 > columna que pueda desincronizarse.
 
-### 5.4 Rentas
+### 6.4 Rentas
 
 Es el proceso central. La tabla muestra folio, cliente, periodo, estado, total,
 pagado, saldo y líneas pendientes de devolución. Arriba se puede filtrar por
 estado y por cliente, y el botón **Detalle** abre un panel lateral con todo el
-contrato.
+contrato. Las solicitudes pendientes aparecen resaltadas.
+
+### 6.5 Solicitudes
+
+Es la bandeja de entrada del administrador. Muestra cuántas solicitudes esperan
+revisión, su monto y las ya aprobadas. Cada fila permite **Revisar** el detalle,
+**Aprobar y reservar** (aparta sin entregar), **Aprobar y entregar** (pasa a
+Activa) o **Rechazar** con un motivo que el cliente verá en su portal.
+
+El número del menú **Solicitudes** es el contador de pendientes y se actualiza
+solo al aprobar o rechazar.
+
+> Aprobar **revalida el inventario** en ese momento. Si entre la solicitud y la
+> aprobación otro cliente ocupó las unidades, el sistema rechaza la aprobación
+> con un mensaje y no cambia nada.
+
+### 6.6 Actividad
+
+Bitácora de todo lo sensible: inicios de sesión, solicitudes, aprobaciones,
+rechazos, pagos, devoluciones y cambios de clientes o equipos. Se puede filtrar
+por tipo de acción y por entidad. Solo la ve el administrador.
 
 ---
 
-## 6. Registrar una renta
+## 7. Portal del cliente
+
+El cliente inicia sesión y llega a **Portal del cliente**. Tiene tres pestañas:
+
+### 7.1 Catálogo
+
+Tarjetas con los equipos disponibles, su precio por día y un botón **Agregar**.
+Puede buscar por nombre o marca, filtrar por categoría y ocultar los agotados.
+
+### 7.2 Nueva solicitud
+
+Arriba eliges las **fechas**; abajo revisas el carrito con cantidades y total
+estimado. Al pulsar **Enviar solicitud**:
+
+- la renta nace en estado **Solicitada**,
+- **todavía no aparta inventario**: el administrador debe aprobarla,
+- el cliente puede seguir viendo el catálogo mientras espera.
+
+### 7.3 Mis solicitudes
+
+Lista con el estado de cada solicitud, el periodo, el total y lo pagado. El
+cliente puede abrir el **Detalle** (equipos, seguimiento y, si la rechazaron, el
+motivo) y **Cancelar** mientras siga en `Solicitada`.
+
+Una vez aprobada, ya no puede cancelarla: debe contactar al administrador.
+
+---
+
+## 8. Registrar una renta
+
+> Esta sección es para el **administrador**. El cliente no crea rentas
+> directamente: envía solicitudes (ver sección 7).
 
 1. Entra a **Rentas** y pulsa **Nueva renta** (o el botón del panel general).
 2. Elige un **cliente activo**. Si no aparece, primero regístralo en Clientes.
@@ -229,7 +342,28 @@ Si todo sale bien, el panel de detalle se abre con el folio asignado y el total.
 
 ---
 
-## 7. Cobrar una renta
+## 9. Aprobar o rechazar solicitudes
+
+Cuando un cliente envía una solicitud, al administrador le aparece un aviso en
+el menú **Solicitudes** y una tarjeta en el panel general.
+
+1. Entra a **Solicitudes**.
+2. Pulsa **Revisar** en la solicitud pendiente.
+3. Revisa cliente, periodo, equipos y total.
+4. Elige una salida:
+   - **Aprobar y reservar**: los equipos quedan apartados, pero no entregados.
+   - **Aprobar y entregar**: la renta pasa a **Activa** de inmediato.
+   - **Rechazar**: escribe el motivo (mínimo 3 caracteres). El cliente lo verá
+     en su portal.
+5. Confirma.
+
+Al aprobar, el servidor revisa otra vez el inventario y aparta las unidades. Si
+ya no alcanza el stock, aparece el motivo y **no se modifica nada**. El contador
+del menú baja solo.
+
+---
+
+## 10. Cobrar una renta
 
 Desde el detalle de la renta, pulsa **Registrar pago**:
 
@@ -242,9 +376,12 @@ El pago queda en la lista de la renta y el saldo se actualiza. Cuando el saldo
 llega a cero, la columna **Pagado** muestra la etiqueta verde *Pagado*. El
 sistema no permite cobrar más de lo que se debe.
 
+> Una solicitud en estado `Solicitada` no se puede cobrar: primero hay que
+> aprobarla en **Solicitudes**.
+
 ---
 
-## 8. Devolver los equipos
+## 11. Devolver los equipos
 
 1. Abre el detalle de la renta.
 2. En la tabla de equipos, marca las casillas de los renglones que regresan y
@@ -260,9 +397,14 @@ El bloque **Cambiar estado** sirve para corregir manualmente una renta
 contrato con sus pagos y detalles; si solo quieres anularla conservando el
 historial, cámbiala a **Cancelada** en lugar de borrarla.
 
+> En una solicitud `Solicitada`, los pagos y las devoluciones están desactivados
+> y el cambio de estado genérico no la puede aprobar. Para eso usa los botones
+> **Aprobar y reservar / Aprobar y entregar** del detalle o de la bandeja de
+> **Solicitudes**.
+
 ---
 
-## 9. Consultar los reportes
+## 12. Consultar los reportes
 
 Entra a **Reportes**. Arriba están las tarjetas de resumen y debajo siete
 pestañas; cada una indica con una etiqueta la técnica SQL que usa (JOIN, filtro,
@@ -288,7 +430,7 @@ vuelve a consultar la base.
 
 ---
 
-## 10. Solución de problemas
+## 13. Solución de problemas
 
 | Mensaje o síntoma | Causa | Solución |
 |---|---|---|
@@ -302,16 +444,27 @@ vuelve a consultar la base.
 | El sitio muestra "No se pudo conectar con el servidor" | El servidor está detenido | Ejecuta `uvicorn app.main:app --reload` |
 | *"Only one usage of each socket address"* | El puerto 8000 ya está ocupado (otro servidor abierto) | Cierra la otra ventana o usa `--port 8001` |
 | Página en blanco | Ruta equivocada | Verifica que sea `http://localhost:8000` |
+| El login dice *"Correo o contraseña incorrectos"* | Datos mal escritos o cuenta inexistente | Revisa mayúsculas; el admin puede asignar una nueva contraseña desde **Clientes → Acceso** |
+| *"Tu cuenta está desactivada"* | El acceso fue revocado | El admin lo reactiva desde **Clientes → Acceso** |
+| El cliente vuelve al login todo el tiempo | Entró por `127.0.0.1` y la API usa `localhost` (o al revés) | Usa siempre el mismo origen: `http://localhost:8000` |
+| El cliente ve `403 No tienes permiso` | Está intentando abrir una pantalla de admin | Entra a **Portal** desde su menú; el admin conserva todas las secciones |
+| El badge de solicitudes no cambia | No hay pendientes o la sesión es de cliente | Recarga la bandeja; el badge solo existe para admin |
 
 ---
 
-## 11. Glosario
+## 14. Glosario
 
 - **API**: puerta de entrada al sistema; recibe peticiones y devuelve datos.
 - **Backend**: programa en Python que valida las reglas y habla con la base.
 - **Frontend**: lo que se ve en el navegador.
 - **Endpoint**: cada dirección de la API (`/api/rentas`, `/api/equipos`…).
 - **Folio**: número de renta (`id_renta`).
+- **Rol**: tipo de cuenta (`admin` o `cliente`); define qué se puede hacer.
+- **Sesión**: periodo durante el cual el navegador recuerda que iniciaste sesión.
+- **Cookie**: pequeño dato que el navegador guarda para mantener la sesión.
+- **Solicitud**: pedido de renta de un cliente; nace en estado `Solicitada`.
+- **Aprobar**: decisión del admin que aparta el inventario y activa la renta.
+- **Bitácora / auditoría**: registro histórico de quién hizo qué y cuándo.
 - **Stock**: unidades totales de un equipo.
 - **Disponible**: unidades libres en este momento.
 - **JSON**: formato de texto con el que el navegador y el servidor intercambian datos.

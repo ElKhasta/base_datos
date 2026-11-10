@@ -8,7 +8,16 @@ INSERT INTO estado_renta (id_estado, estado) OVERRIDING SYSTEM VALUE VALUES
     (1, 'Reservada'),
     (2, 'Activa'),
     (3, 'Finalizada'),
-    (4, 'Cancelada');
+    (4, 'Cancelada'),
+    (5, 'Solicitada');
+
+
+-- 1b. Roles del sistema ----------------------------------------------
+--     Los usuarios se crean solos al arrancar la API (admin y cliente
+--     de demostracion); aqui solo se define el catalogo.
+INSERT INTO rol (id_rol, nombre) OVERRIDING SYSTEM VALUE VALUES
+    (1, 'admin'),
+    (2, 'cliente');
 
 
 -- 2. Categorias ------------------------------------------------------
@@ -60,6 +69,7 @@ INSERT INTO pago (id_pago, id_renta, monto_pagado, metodo_pago) OVERRIDING SYSTE
 
 -- 8. Sincronizar las secuencias (obligatorio al usar IDs manuales) ---
 SELECT setval(pg_get_serial_sequence('estado_renta', 'id_estado'), (SELECT MAX(id_estado) FROM estado_renta));
+SELECT setval(pg_get_serial_sequence('rol',          'id_rol'),    (SELECT MAX(id_rol) FROM rol));
 SELECT setval(pg_get_serial_sequence('categoria',    'id_categoria'), (SELECT MAX(id_categoria) FROM categoria));
 SELECT setval(pg_get_serial_sequence('cliente',      'id_cliente'),   (SELECT MAX(id_cliente) FROM cliente));
 SELECT setval(pg_get_serial_sequence('equipo',       'id_equipo'),    (SELECT MAX(id_equipo) FROM equipo));

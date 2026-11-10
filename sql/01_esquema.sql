@@ -10,9 +10,12 @@
 -- =====================================================================
 
 DROP VIEW  IF EXISTS v_equipo_disponible;
+DROP TABLE IF EXISTS auditoria     CASCADE;
 DROP TABLE IF EXISTS pago          CASCADE;
 DROP TABLE IF EXISTS detalle_renta CASCADE;
 DROP TABLE IF EXISTS renta         CASCADE;
+DROP TABLE IF EXISTS usuario       CASCADE;
+DROP TABLE IF EXISTS rol           CASCADE;
 DROP TABLE IF EXISTS equipo        CASCADE;
 DROP TABLE IF EXISTS estado_renta  CASCADE;
 DROP TABLE IF EXISTS cliente       CASCADE;
@@ -43,7 +46,41 @@ CREATE TABLE cliente (
 
 
 -- ---------------------------------------------------------------------
--- 3. ESTADO_RENTA  (catalogo: Reservada, Activa, Finalizada, Cancelada)
+-- 3. ROLES Y USUARIOS (para el login y los permisos)
+--    - admin:   administra todo el sistema
+--    - cliente: solo puede consultar el catalogo y solicitar rentas
+-- ---------------------------------------------------------------------
+CREATE TABLE rol (
+    id_rol  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre  VARCHAR(20) NOT NULL UNIQUE,
+    CONSTRAINT chk_rol_nombre CHECK (nombre IN ('admin', 'cliente'))
+);
+
+-- La contrasena se guarda como hash (PBKDF2-SHA256), nunca en texto plano.
+CREATE TABLE usuario (
+    id_usuario    INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    email         VARCHAR(120) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    nombre        VARCHAR(100) NOT NULL,
+    id_rol        INTEGER NOT NULL,
+    id_cliente    INTEGER UNIQUE,
+    activo        BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_usuario_rol
+        FOREIGN KEY (id_rol) REFERENCES rol (id_rol)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+
+    CONSTRAINT fk_usuario_cliente
+        FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX idx_usuario_rol ON usuario (id_rol);
+
+
+-- ---------------------------------------------------------------------
+-- 4. ESTADO_RENTA  (catalogo: Solicitada, Reservada, Activa, Finalizada, Cancelada)
 -- ---------------------------------------------------------------------
 CREATE TABLE estado_renta (
     id_estado INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -74,6 +111,8 @@ CREATE TABLE equipo (
 
 -- ---------------------------------------------------------------------
 -- 5. RENTA  (el contrato general)
+--    Una renta nace como "Solicitada" (no aparta stock), el admin la
+--    aprueba y pasa a "Reservada" o "Activa".
 -- ---------------------------------------------------------------------
 CREATE TABLE renta (
     id_renta           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -84,6 +123,12 @@ CREATE TABLE renta (
     fecha_fin_estimada DATE NOT NULL,
     monto_total        NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (monto_total >= 0),
 
+    -- Trazabilidad de la solicitud
+    id_usuario_solicita INTEGER,
+    id_usuario_aprueba  INTEGER,
+    fecha_aprobacion    TIMESTAMPTZ,
+    motivo_rechazo      TEXT,
+
     CONSTRAINT fk_renta_cliente
         FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente)
         ON DELETE RESTRICT,
@@ -91,6 +136,14 @@ CREATE TABLE renta (
     CONSTRAINT fk_renta_estado
         FOREIGN KEY (id_estado) REFERENCES estado_renta (id_estado)
         ON DELETE RESTRICT,
+
+    CONSTRAINT fk_renta_solicita
+        FOREIGN KEY (id_usuario_solicita) REFERENCES usuario (id_usuario)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_renta_aprueba
+        FOREIGN KEY (id_usuario_aprueba) REFERENCES usuario (id_usuario)
+        ON DELETE SET NULL,
 
     -- Restriccion logica: no puedes entregar antes de iniciar
     CONSTRAINT chk_renta_fechas CHECK (fecha_fin_estimada >= fecha_inicio)
@@ -146,6 +199,25 @@ CREATE TABLE pago (
 );
 
 CREATE INDEX idx_pago_renta ON pago (id_renta);
+
+
+-- ---------------------------------------------------------------------
+-- 8. AUDITORIA  (quien hizo que y cuando)
+--    No tiene FK hacia renta/pago para conservar el rastro aunque el
+--    registro original se elimine.
+-- ---------------------------------------------------------------------
+CREATE TABLE auditoria (
+    id_auditoria BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_usuario   INTEGER REFERENCES usuario (id_usuario) ON DELETE SET NULL,
+    accion       VARCHAR(40) NOT NULL,
+    entidad      VARCHAR(30) NOT NULL,
+    id_entidad   INTEGER,
+    detalle      TEXT,
+    fecha        TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_auditoria_fecha  ON auditoria (fecha DESC);
+CREATE INDEX idx_auditoria_accion ON auditoria (accion);
 
 
 -- =====================================================================

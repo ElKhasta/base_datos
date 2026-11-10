@@ -9,20 +9,23 @@ Sitio (front):                        http://localhost:8000/
 """
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from psycopg import errors as pg_errors
 
 from .config import CORS_ORIGINS, FRONTEND_DIR
 from .db import get_db, pool
-from .routers import categorias, clientes, equipos, pagos, rentas, reportes
+from .routers import auditoria, auth, categorias, clientes, equipos, pagos, rentas, reportes
+from .security import leer_sesion, usuario_actual
+from .seed import sembrar_usuarios
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     pool.open()
+    sembrar_usuarios()
     yield
     pool.close()
 
@@ -52,6 +55,9 @@ MENSAJES_POR_RESTRICCION = {
     "cliente_email_key": "Ya existe un cliente registrado con ese correo",
     "categoria_nombre_categoria_key": "Ya existe una categoria con ese nombre",
     "estado_renta_estado_key": "Ese estado ya existe",
+    "usuario_email_key": "Ya existe una cuenta con ese correo",
+    "usuario_id_cliente_key": "Ese cliente ya tiene una cuenta de acceso",
+    "rol_nombre_key": "Ese rol ya existe",
 }
 
 
@@ -91,8 +97,25 @@ async def _integrity_error(request, exc):
 
 
 # ---------------------------------------------------------------------
+# Cabeceras de seguridad basicas (no afectan el funcionamiento del front)
+# ---------------------------------------------------------------------
+@app.middleware("http")
+async def cabeceras_seguridad(request: Request, call_next):
+    respuesta = await call_next(request)
+    respuesta.headers.setdefault("X-Content-Type-Options", "nosniff")
+    respuesta.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    respuesta.headers.setdefault("Referrer-Policy", "same-origin")
+    respuesta.headers.setdefault(
+        "Permissions-Policy", "geolocation=(), microphone=(), camera=()"
+    )
+    return respuesta
+
+
+# ---------------------------------------------------------------------
 # Rutas
 # ---------------------------------------------------------------------
+app.include_router(auth.router, prefix="/api")
+app.include_router(auditoria.router, prefix="/api")
 app.include_router(categorias.router, prefix="/api")
 app.include_router(clientes.router, prefix="/api")
 app.include_router(equipos.router, prefix="/api")
@@ -111,10 +134,25 @@ def salud(db=Depends(get_db)):
 
 
 @app.get("/api/estados", tags=["Sistema"])
-def estados(db=Depends(get_db)):
+def estados(usuario: dict = Depends(usuario_actual), db=Depends(get_db)):
     with db.cursor() as cur:
         cur.execute("SELECT id_estado, estado FROM estado_renta ORDER BY id_estado")
         return cur.fetchall()
+
+
+# ---------------------------------------------------------------------
+# Puerta de entrada: sin sesion manda al login; con sesion al panel.
+# ---------------------------------------------------------------------
+@app.get("/", include_in_schema=False)
+def portada(request: Request):
+    if leer_sesion(request) is None:
+        return RedirectResponse("/login.html", status_code=302)
+    return RedirectResponse("/index.html", status_code=302)
+
+
+@app.get("/login", include_in_schema=False)
+def ir_al_login():
+    return RedirectResponse("/login.html", status_code=302)
 
 
 # ---------------------------------------------------------------------

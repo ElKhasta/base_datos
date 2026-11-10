@@ -16,6 +16,9 @@ const API_BASE = (() => {
   return esServidorPropio ? `${location.origin}/api` : "http://localhost:8000/api";
 })();
 
+/** ¿Estamos en la pantalla de login? (ahí un 401 es normal) */
+const EN_LOGIN = /\/login(\.html)?$/.test(location.pathname);
+
 /** Convierte un objeto en query string, omitiendo valores vacíos. */
 function queryString(filtros = {}) {
   const limpios = Object.entries(filtros).filter(
@@ -31,7 +34,9 @@ const Api = {
    * Lanza un Error con el mensaje del backend si la respuesta no es 2xx.
    */
   async pedir(ruta, opciones = {}) {
-    const config = { ...opciones };
+    // credentials: "include" envía la cookie de sesión también cuando el
+    // front se abre con Live Server en otro puerto.
+    const config = { credentials: "include", ...opciones };
 
     // Solo mandamos Content-Type cuando hay cuerpo: así un GET no dispara
     // una petición preflight innecesaria en CORS.
@@ -57,6 +62,12 @@ const Api = {
     }
 
     if (!respuesta.ok) {
+      // Sesión vencida o inexistente: al login (salvo que ya estemos ahí).
+      if (respuesta.status === 401 && !EN_LOGIN && !ruta.startsWith("/auth/login")) {
+        const volver = encodeURIComponent(location.pathname + location.search);
+        location.replace(`login.html?volver=${volver}`);
+      }
+
       let mensaje = datos?.detail ?? `Error ${respuesta.status}`;
       // Los errores de validación de Pydantic (422) llegan como lista.
       if (Array.isArray(mensaje)) {
@@ -67,7 +78,9 @@ const Api = {
           })
           .join(". ");
       }
-      throw new Error(mensaje);
+      const error = new Error(mensaje);
+      error.status = respuesta.status;
+      throw error;
     }
 
     return datos;
@@ -80,6 +93,15 @@ const Api = {
   del(ruta) { return this.pedir(ruta, { method: "DELETE" }); },
 
   /* ---------------------------- Atajos por entidad ---------------------------- */
+  auth: {
+    login: (email, password) => Api.post("/auth/login", { email, password }),
+    registro: (datos) => Api.post("/auth/registro", datos),
+    logout: () => Api.post("/auth/logout", {}),
+    yo: () => Api.get("/auth/yo"),
+    cambiarPassword: (actual, nueva) =>
+      Api.put("/auth/password", { actual, nueva }),
+  },
+
   clientes: {
     listar: (q = "", activos = "") =>
       Api.get(`/clientes${queryString({ q, activos })}`),
@@ -88,6 +110,8 @@ const Api = {
     editar: (id, c) => Api.put(`/clientes/${id}`, c),
     eliminar: (id) => Api.del(`/clientes/${id}`),
     historial: (id) => Api.get(`/reportes/historial-cliente/${id}`),
+    acceso: (id, datos) => Api.post(`/clientes/${id}/acceso`, datos),
+    revocarAcceso: (id) => Api.del(`/clientes/${id}/acceso`),
   },
 
   categorias: {
@@ -114,6 +138,11 @@ const Api = {
     devolver: (id, datos = {}) => Api.post(`/rentas/${id}/devoluciones`, datos),
     eliminar: (id) => Api.del(`/rentas/${id}`),
     pagar: (id, pago) => Api.post(`/rentas/${id}/pagos`, pago),
+    aprobar: (id, estado = "Reservada") =>
+      Api.post(`/rentas/${id}/aprobar`, { estado }),
+    rechazar: (id, motivo) => Api.post(`/rentas/${id}/rechazar`, { motivo }),
+    cancelar: (id) => Api.post(`/rentas/${id}/cancelar`, {}),
+    pendientesConteo: () => Api.get("/rentas/pendientes/conteo"),
   },
 
   pagos: {
@@ -129,6 +158,11 @@ const Api = {
     rentasVencidas: () => Api.get("/reportes/rentas-vencidas"),
     topClientes: () => Api.get("/reportes/top-clientes"),
     resumen: () => Api.get("/reportes/resumen"),
+  },
+
+  auditoria: {
+    listar: (filtros = {}) => Api.get(`/auditoria${queryString(filtros)}`),
+    acciones: () => Api.get("/auditoria/acciones"),
   },
 
   sistema: {

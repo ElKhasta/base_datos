@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solicitudes · RentaVisual</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="assets/css/estilos.css" rel="stylesheet" />
+</head>
+<body data-pagina="solicitudes" data-solo-admin="true">
+
+  <div id="app-navbar"></div>
+
+  <main class="container py-4">
+
+    <div class="encabezado-pagina">
+      <div>
+        <h1>Solicitudes</h1>
+        <p class="subtitulo">
+          Revisa las solicitudes de los clientes, valida el inventario y apruébalas o recházalas.
+        </p>
+      </div>
+      <button class="btn btn-outline-secondary no-print" id="btnRecargarSolicitudes">
+        <i class="bi bi-arrow-clockwise me-1"></i>Recargar
+      </button>
+    </div>
+
+    <!-- ===================== Métricas ===================== -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="card tarjeta-metrica shadow-sm h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icono"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+              <div class="text-muted small">Por aprobar</div>
+              <div class="valor" id="mPendientes">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card tarjeta-metrica shadow-sm h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icono"><i class="bi bi-inbox"></i></div>
+            <div>
+              <div class="text-muted small">Solicitudes totales</div>
+              <div class="valor" id="mTotal">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card tarjeta-metrica shadow-sm h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icono"><i class="bi bi-cash-stack"></i></div>
+            <div>
+              <div class="text-muted small">Monto por aprobar</div>
+              <div class="valor fs-5" id="mMontoPendiente">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card tarjeta-metrica shadow-sm h-100">
+          <div class="card-body d-flex align-items-center gap-3">
+            <div class="icono"><i class="bi bi-check2-circle"></i></div>
+            <div>
+              <div class="text-muted small">Aprobadas</div>
+              <div class="valor" id="mAprobadas">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="avisoPendientes" class="alert alert-warning d-none align-items-center gap-2">
+      <i class="bi bi-bell-fill"></i>
+      <span id="textoPendientes"></span>
+    </div>
+
+    <!-- ===================== Listado ===================== -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-12 col-md-5">
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+              <input type="search" class="form-control" id="buscarSolicitud"
+                     placeholder="Buscar por cliente o folio…" autocomplete="off" />
+            </div>
+          </div>
+          <div class="col-7 col-md-4">
+            <select class="form-select" id="filtroEstado">
+              <option value="Solicitada">Solo pendientes</option>
+              <option value="">Todas las solicitudes</option>
+              <option value="Reservada">Reservadas</option>
+              <option value="Activa">Activas</option>
+              <option value="Finalizada">Finalizadas</option>
+              <option value="Cancelada">Canceladas / rechazadas</option>
+            </select>
+          </div>
+          <div class="col-5 col-md-3 text-md-end">
+            <span class="badge badge-suave" id="contadorSolicitudes">—</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle tabla-datos">
+            <thead>
+              <tr>
+                <th>Folio</th>
+                <th>Cliente</th>
+                <th>Solicitada</th>
+                <th>Periodo</th>
+                <th class="text-end">Total</th>
+                <th>Estado</th>
+                <th class="text-end no-print">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaSolicitudes">
+              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-muted small mt-3 mb-0">
+      <i class="bi bi-info-circle me-1"></i>
+      Una solicitud <strong>no aparta inventario</strong>. Al aprobarla, el servidor revalida
+      la disponibilidad y bloquea las unidades en la misma transacción.
+    </p>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <!-- ===================== Modal detalle / aprobación ===================== -->
+  <div class="modal fade" id="modalSolicitud" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloSolicitud">Detalle de la solicitud</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body" id="detalleSolicitud">
+          <div class="text-center text-muted py-4">
+            <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+          </div>
+        </div>
+
+        <div class="modal-footer d-block" id="accionesSolicitud">
+          <div id="zonaAprobar" class="d-none">
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="button" class="btn btn-outline-danger" id="btnMostrarRechazo">
+                <i class="bi bi-x-circle me-1"></i>Rechazar
+              </button>
+              <button type="button" class="btn btn-outline-primary" data-aprobar="Reservada">
+                <i class="bi bi-bookmark-check me-1"></i>Aprobar y reservar
+              </button>
+              <button type="button" class="btn btn-success" data-aprobar="Activa">
+                <i class="bi bi-check2-circle me-1"></i>Aprobar y entregar
+              </button>
+            </div>
+
+            <div id="zonaRechazo" class="d-none mt-3 text-start">
+              <label class="form-label requerido" for="motivoRechazo">Motivo del rechazo</label>
+              <textarea class="form-control" id="motivoRechazo" rows="2" maxlength="500"
+                        placeholder="Ej. No hay disponibilidad para esas fechas"></textarea>
+              <div class="invalid-feedback">Escribe al menos 3 caracteres.</div>
+              <div class="d-flex gap-2 justify-content-end mt-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCancelarRechazo">
+                  Volver
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" id="btnConfirmarRechazo">
+                  <i class="bi bi-send me-1"></i>Rechazar solicitud
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="zonaCerrada" class="d-none">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/comun.js"></script>
+  <script src="assets/js/paginas/solicitudes.js"></script>
+</body>
+</html>

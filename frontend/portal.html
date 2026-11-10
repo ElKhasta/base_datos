@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal del cliente · RentaVisual</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="assets/css/estilos.css" rel="stylesheet" />
+</head>
+<body data-pagina="portal" data-solo-cliente="true">
+
+  <div id="app-navbar"></div>
+
+  <main class="container py-4">
+
+    <!-- ===================== Bienvenida ===================== -->
+    <section class="hero-cliente mb-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+          <div class="saludo">Hola de nuevo,</div>
+          <h1 id="saludoCliente">cliente</h1>
+          <p class="mb-0" style="color: rgba(255,255,255,.8);">
+            Explora el catálogo, arma tu solicitud y sigue su estado en tiempo real.
+          </p>
+        </div>
+        <span class="chip"><i class="bi bi-shield-check"></i> Cuenta de cliente</span>
+      </div>
+
+      <div class="row g-2 mt-3">
+        <div class="col-6 col-md-4">
+          <div class="chip w-100 justify-content-center">
+            <i class="bi bi-hourglass-split"></i>
+            <span><strong id="metricPendientes">0</strong> por aprobar</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="chip w-100 justify-content-center">
+            <i class="bi bi-clipboard-check"></i>
+            <span><strong id="metricActivas">0</strong> activas</span>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="chip w-100 justify-content-center">
+            <i class="bi bi-wallet2"></i>
+            <span><strong id="metricTotal">$0.00</strong> solicitado</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Pestañas ===================== -->
+    <ul class="nav tab-portal mb-4" id="tabsPortal" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" data-tab="catalogo" role="tab">
+          <i class="bi bi-grid me-1"></i>Catálogo
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab="nueva" role="tab">
+          <i class="bi bi-cart-plus me-1"></i>Nueva solicitud
+          <span class="badge rounded-pill text-bg-primary ms-1 d-none" id="cartCount">0</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab="mis" role="tab">
+          <i class="bi bi-clipboard-check me-1"></i>Mis solicitudes
+        </button>
+      </li>
+    </ul>
+
+    <!-- ===================== Catálogo ===================== -->
+    <section id="panelCatalogo">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-5">
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" id="buscarEquipo"
+                       placeholder="Buscar por equipo o marca…" autocomplete="off" />
+              </div>
+            </div>
+            <div class="col-7 col-md-4">
+              <select class="form-select" id="filtroCategoria">
+                <option value="">Todas las categorías</option>
+              </select>
+            </div>
+            <div class="col-5 col-md-3">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="soloDisponibles" checked />
+                <label class="form-check-label small" for="soloDisponibles">Solo disponibles</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3" id="gridEquipos">
+        <div class="col-12 text-center text-muted py-5">
+          <span class="spinner-border spinner-border-sm me-2"></span>Cargando catálogo…
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Nueva solicitud ===================== -->
+    <section id="panelNueva" class="d-none">
+      <div class="row g-4">
+
+        <div class="col-lg-7">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="mb-3"><i class="bi bi-calendar3 me-2"></i>Fechas de la renta</h5>
+
+              <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                  <label class="form-label requerido" for="solInicio">Fecha de inicio</label>
+                  <input type="date" class="form-control" id="solInicio" required />
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label requerido" for="solFin">Fin estimado</label>
+                  <input type="date" class="form-control" id="solFin" required />
+                  <div class="invalid-feedback">No puede ser anterior al inicio.</div>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0"><i class="bi bi-camera-reels me-2"></i>Equipos solicitados</h5>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-tab="catalogo">
+                  <i class="bi bi-plus-lg me-1"></i>Agregar más
+                </button>
+              </div>
+
+              <div id="cartVacio" class="carrito-vacio">
+                <i class="bi bi-cart-x fs-3 d-block mb-1"></i>
+                Tu solicitud está vacía. Agrega equipos desde el catálogo.
+              </div>
+
+              <div class="table-responsive d-none" id="cartContenedor">
+                <table class="table align-middle tabla-datos">
+                  <thead>
+                    <tr>
+                      <th>Equipo</th>
+                      <th class="text-end">Precio/día</th>
+                      <th class="text-center" style="width: 90px;">Cant.</th>
+                      <th class="text-end">Subtotal</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaCarrito"></tbody>
+                </table>
+              </div>
+
+              <div class="alert alert-warning mt-3 mb-0 small d-none" id="avisoSolicitud"></div>
+
+              <div class="alert alert-light border mt-3 mb-0 small">
+                <i class="bi bi-info-circle me-1"></i>
+                Tu solicitud <strong>no aparta inventario</strong> todavía. El administrador
+                revisa la disponibilidad y la aprueba o rechaza.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card shadow-sm resumen-sticky">
+            <div class="card-body">
+              <h6 class="text-uppercase text-muted small fw-bold mb-3">Resumen de la solicitud</h6>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Días de renta</span>
+                <strong id="cartDias">1</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Líneas</span>
+                <strong id="cartLineas">0</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">Unidades</span>
+                <strong id="cartUnidades">0</strong>
+              </div>
+
+              <div class="resumen-total">
+                <span>Total estimado</span>
+                <span class="monto" id="cartTotal">$0.00</span>
+              </div>
+
+              <button class="btn btn-primary w-100 mt-3 py-2" id="btnEnviarSolicitud">
+                <span class="spinner-border spinner-border-sm me-2 d-none" id="spinnerSolicitud"></span>
+                <i class="bi bi-send me-1"></i>Enviar solicitud
+              </button>
+
+              <p class="text-muted small mt-3 mb-0">
+                El total final lo calcula el servidor con el precio vigente de cada equipo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Mis solicitudes ===================== -->
+    <section id="panelMis" class="d-none">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+          <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Mi historial</h5>
+          <p class="text-muted small mb-0">Solicitudes, rentas activas y rentas finalizadas.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge badge-suave" id="contadorSolicitudes">—</span>
+          <select class="form-select form-select-sm" id="filtroSolicitud" style="width: auto;">
+            <option value="">Todos los estados</option>
+            <option value="Solicitada">Solicitadas</option>
+            <option value="Reservada">Reservadas</option>
+            <option value="Activa">Activas</option>
+            <option value="Finalizada">Finalizadas</option>
+            <option value="Cancelada">Canceladas</option>
+          </select>
+          <button class="btn btn-sm btn-outline-secondary" id="btnRecargarSolicitudes">
+            <i class="bi bi-arrow-clockwise me-1"></i>Recargar
+          </button>
+        </div>
+      </div>
+
+      <div id="listaSolicitudes" class="row g-3">
+        <div class="col-12 text-center text-muted py-5">
+          <span class="spinner-border spinner-border-sm me-2"></span>Cargando solicitudes…
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="app-footer"></div>
+
+  <!-- ===================== Modal detalle ===================== -->
+  <div class="modal fade" id="modalDetalleSolicitud" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloDetalleSolicitud">Detalle de la solicitud</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="detalleSolicitud">
+          <div class="text-center text-muted py-4">
+            <span class="spinner-border spinner-border-sm me-2"></span>Cargando…
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/comun.js"></script>
+  <script src="assets/js/paginas/portal.js"></script>
+</body>
+</html>

@@ -342,10 +342,13 @@ qué versión usaste.
 ### 6.3 El `.env`
 
 ```
-DATABASE_URL=postgresql://postgres:admin@localhost:5432/renta_equipos
+DATABASE_URL=postgresql://postgres:TU_CONTRASENA@localhost:5432/renta_equipos
+SECRET_KEY=una-cadena-larga-y-aleatoria
 ```
 
 Ese archivo **nunca** va a Git. Se comparte `.env.example` sin contraseña.
+`SECRET_KEY` firma la cookie de sesión: si la cambias, se cierran todas las
+sesiones abiertas.
 
 ### 6.4 Primera conexión (antes de FastAPI)
 
@@ -520,6 +523,70 @@ front desde el mismo servidor (`StaticFiles`), no hay problema.
 **Checkpoint 10:** la tabla muestra los equipos reales y la consola del
 navegador (`F12`) no tiene errores rojos.
 
+### 10.4 Login y dos roles (cuando el CRUD ya funciona)
+
+No agregues autenticación al principio: primero haz que el sistema funcione con
+un solo usuario implícito. Cuando el negocio ya esté claro, separa los permisos.
+
+**Paso 1 — Modelo.** Un `usuario` no es lo mismo que un `cliente`:
+
+```sql
+CREATE TABLE rol (
+  id_rol   SERIAL PRIMARY KEY,
+  nombre   VARCHAR(20) NOT NULL UNIQUE   -- 'admin', 'cliente'
+);
+
+CREATE TABLE usuario (
+  id_usuario SERIAL PRIMARY KEY,
+  email      VARCHAR(120) NOT NULL UNIQUE,
+  password   TEXT NOT NULL,              -- hash, nunca texto plano
+  nombre     VARCHAR(80) NOT NULL,
+  id_rol     INT NOT NULL REFERENCES rol(id_rol),
+  id_cliente INT UNIQUE REFERENCES cliente(id_cliente),  -- NULL para admin
+  activo     BOOLEAN NOT NULL DEFAULT TRUE
+);
+```
+
+`id_cliente` único evita dos cuentas para el mismo cliente y, al ser NULL para
+el admin, no obliga a inventar un cliente "sistema".
+
+**Paso 2 — Contraseñas.** Usa `hashlib.pbkdf2_hmac` (viene en Python) con sal
+aleatoria e iteraciones altas. Guarda `algoritmo$iteraciones$sal$hash`. Para
+comparar, `hmac.compare_digest` (tiempo constante). No inventes tu propio
+algoritmo ni guardes la contraseña "cifrada" de forma reversible.
+
+**Paso 3 — Sesión.** Firma una cookie `HttpOnly` con HMAC-SHA256: guarda
+`id_usuario.expira.firma`. No uses `localStorage`: cualquier XSS podría leer el
+token. La cookie no lleva el rol; el servidor lo consulta en la base en **cada**
+petición, así desactivar un usuario surte efecto de inmediato.
+
+**Paso 4 — Dependencias de FastAPI.**
+
+```python
+@app.get("/clientes")
+def listar(usuario=Depends(usuario_actual)):  # 401 si no hay sesión
+    ...
+
+@app.get("/auditoria")
+def bitacora(admin=Depends(requiere_admin)):  # 403 si el rol no es admin
+    ...
+```
+
+**Paso 5 — Pertenencia.** No basta con "solo admin": un cliente debe ver **sus**
+rentas. Aplica el filtro en el SQL (`WHERE r.id_cliente = %s`) y responde `404`
+—no `403`— cuando pide algo ajeno, para no revelar que existe.
+
+**Paso 6 — Un estado nuevo, no una tabla nueva.** Si el cliente "pide" y el admin
+"aprueba", agrega el estado `Solicitada` a `estado_renta`. Su ventaja: no hay
+tabla paralela ni dos caminos de código. Su regla: `Solicitada` **no** cuenta
+para disponibilidad; el stock se aparta al aprobar, revalidándolo en ese momento.
+
+> **Checkpoint 10.5:** entra como cliente, envía una solicitud; entra como admin,
+> apruébala. La disponibilidad del equipo debe bajar recién en la aprobación, y
+> un `GET /clientes` con la cookie del cliente debe responder `403`.
+
+El detalle completo de la implementación está en `docs/ROLES.md`.
+
 ---
 
 ## Fase 11 — Probar
@@ -537,6 +604,10 @@ tristes**:
 | Pago mayor al total | 409 |
 | Devolver dos veces | 409 |
 | Campo faltante | 422 |
+| Entrar sin sesión | 401 |
+| Cliente llamando `/clientes` | 403 |
+| Cliente pidiendo una renta ajena | 404 |
+| Aprobar dos veces la misma solicitud | 409 |
 
 ### 11.2 Prueba automatizada
 

@@ -15,9 +15,12 @@ const btnGuardar = document.getElementById("btnGuardarCliente");
 
 const modalCliente = bootstrap.Modal.getOrCreateInstance(document.getElementById("modalCliente"));
 const modalHistorial = bootstrap.Modal.getOrCreateInstance(document.getElementById("modalHistorial"));
+const modalAcceso = bootstrap.Modal.getOrCreateInstance(document.getElementById("modalAcceso"));
+const formAcceso = document.getElementById("formAcceso");
 
 let clientes = [];
 let numeroPeticion = 0;
+let clienteAcceso = null;
 
 /* ------------------------------ Lectura ------------------------------ */
 async function cargar() {
@@ -25,7 +28,7 @@ async function cargar() {
   const activos = filtroActivos.value;
   const miPeticion = ++numeroPeticion;
 
-  tabla.innerHTML = filaCargando(6);
+  tabla.innerHTML = filaCargando(7);
 
   try {
     const datos = await Api.clientes.listar(q, activos);
@@ -35,7 +38,7 @@ async function cargar() {
     pintarTabla();
   } catch (e) {
     if (miPeticion !== numeroPeticion) return;
-    tabla.innerHTML = filaVacia(6, "No se pudieron cargar los clientes");
+    tabla.innerHTML = filaVacia(7, "No se pudieron cargar los clientes");
     contador.textContent = "—";
     error(e);
   }
@@ -54,6 +57,14 @@ function pintarTabla() {
         </td>
         <td>${escapar(c.telefono) || "—"}</td>
         <td>${escapar(c.email) || "—"}</td>
+        <td>
+          ${c.tiene_acceso
+            ? `<span class="badge ${c.acceso_activo ? "text-bg-success" : "text-bg-secondary"}">
+                 ${c.acceso_activo ? "Con acceso" : "Revocado"}
+               </span>
+               <div class="celda-secundaria">${escapar(c.email_acceso)}</div>`
+            : '<span class="badge text-bg-light text-muted">Sin acceso</span>'}
+        </td>
         <td>${fecha(c.fecha_alta)}</td>
         <td>
           <span class="badge ${activo ? "text-bg-success" : "text-bg-secondary"} badge-estado">
@@ -61,6 +72,11 @@ function pintarTabla() {
           </span>
         </td>
         <td class="text-end acciones-tabla no-print">
+          <button class="btn ${c.tiene_acceso && c.acceso_activo ? "btn-outline-success" : "btn-outline-secondary"}"
+                  data-accion="acceso" data-id="${c.id_cliente}"
+                  title="Acceso al portal" aria-label="Acceso al portal">
+            <i class="bi bi-key"></i>
+          </button>
           <button class="btn btn-outline-secondary" data-accion="historial" data-id="${c.id_cliente}"
                   title="Ver historial" aria-label="Ver historial">
             <i class="bi bi-clock-history"></i>
@@ -80,7 +96,7 @@ function pintarTabla() {
                </button>`}
         </td>
       </tr>`;
-  }).join("") || filaVacia(6, "No se encontraron clientes con ese filtro");
+  }).join("") || filaVacia(7, "No se encontraron clientes con ese filtro");
 }
 
 /* --------------------------- Formulario --------------------------- */
@@ -134,6 +150,91 @@ form.addEventListener("submit", async (evento) => {
   }
 });
 
+/* --------------------------- Acceso al portal --------------------------- */
+function abrirAcceso(cliente) {
+  clienteAcceso = cliente;
+  formAcceso.reset();
+  formAcceso.classList.remove("was-validated");
+
+  document.getElementById("accesoClienteId").value = cliente.id_cliente;
+  document.getElementById("accesoEmail").value = cliente.email_acceso || cliente.email || "";
+  document.getElementById("accesoNombre").value = "";
+
+  const estado = document.getElementById("accesoEstado");
+  if (cliente.tiene_acceso && cliente.acceso_activo) {
+    estado.className = "alert alert-success small";
+    estado.innerHTML = `<i class="bi bi-check-circle me-1"></i>
+      Este cliente ya puede iniciar sesión con <strong>${escapar(cliente.email_acceso)}</strong>.
+      Si guardas de nuevo, se actualizará el correo y la contraseña.`;
+  } else if (cliente.tiene_acceso) {
+    estado.className = "alert alert-warning small";
+    estado.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>
+      El acceso está revocado. Guardar de nuevo lo reactiva y actualiza la contraseña.`;
+  } else {
+    estado.className = "alert alert-light border small";
+    estado.innerHTML = `<i class="bi bi-info-circle me-1"></i>
+      Este cliente todavía no tiene cuenta. Al guardar podrá entrar al portal y ver
+      únicamente sus propias solicitudes.`;
+  }
+
+  document.getElementById("btnRevocarAcceso").classList.toggle(
+    "d-none",
+    !(cliente.tiene_acceso && cliente.acceso_activo)
+  );
+
+  modalAcceso.show();
+}
+
+formAcceso.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+
+  if (!formAcceso.checkValidity()) {
+    formAcceso.classList.add("was-validated");
+    return;
+  }
+
+  const id = document.getElementById("accesoClienteId").value;
+  const boton = document.getElementById("btnGuardarAcceso");
+
+  boton.disabled = true;
+  try {
+    await Api.clientes.acceso(id, {
+      email: document.getElementById("accesoEmail").value.trim(),
+      password: document.getElementById("accesoPassword").value,
+      nombre: document.getElementById("accesoNombre").value.trim() || null,
+    });
+    toast("Acceso al portal guardado");
+    modalAcceso.hide();
+    cargar();
+  } catch (e) {
+    error(e);
+  } finally {
+    boton.disabled = false;
+  }
+});
+
+document.getElementById("btnRevocarAcceso").addEventListener("click", async () => {
+  if (!clienteAcceso) return;
+
+  const ok = await confirmar({
+    titulo: "Revocar acceso al portal",
+    texto: `<strong>${escapar(clienteAcceso.nombre_completo)}</strong> ya no podrá iniciar sesión.
+            Su cuenta y su historial se conservan; puedes reactivarla después.`,
+    boton: "Revocar acceso",
+    peligro: true,
+  });
+  if (!ok) return;
+
+  try {
+    await Api.clientes.revocarAcceso(clienteAcceso.id_cliente);
+    toast("Acceso revocado");
+    modalAcceso.hide();
+    cargar();
+  } catch (e) {
+    error(e);
+  }
+});
+
 /* ----------------------------- Historial ----------------------------- */
 async function verHistorial(cliente) {
   document.getElementById("tituloHistorial").textContent =
@@ -178,6 +279,11 @@ tabla.addEventListener("click", async (evento) => {
 
     if (boton.dataset.accion === "historial") {
       await verHistorial(cliente);
+      return;
+    }
+
+    if (boton.dataset.accion === "acceso") {
+      abrirAcceso(cliente);
       return;
     }
 

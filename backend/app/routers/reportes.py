@@ -2,8 +2,14 @@
 from fastapi import APIRouter, Depends, Query
 
 from ..db import get_db
+from ..security import requiere_admin
 
-router = APIRouter(prefix="/reportes", tags=["Reportes"])
+# Todos los reportes son administrativos.
+router = APIRouter(
+    prefix="/reportes",
+    tags=["Reportes"],
+    dependencies=[Depends(requiere_admin)],
+)
 
 
 @router.get("/pendientes-devolucion")
@@ -132,6 +138,9 @@ def resumen(db=Depends(get_db)):
               (SELECT COUNT(*) FROM renta r
                 JOIN estado_renta s ON s.id_estado = r.id_estado
                WHERE s.estado = 'Activa')                                  AS rentas_activas,
+              (SELECT COUNT(*) FROM renta r
+                JOIN estado_renta s ON s.id_estado = r.id_estado
+               WHERE s.estado = 'Solicitada')                              AS solicitudes_pendientes,
               (SELECT COUNT(*) FROM detalle_renta
                 WHERE fecha_devolucion IS NULL)                            AS lineas_pendientes,
               (SELECT COALESCE(SUM(monto_pagado), 0) FROM pago)            AS ingresos_cobrados,

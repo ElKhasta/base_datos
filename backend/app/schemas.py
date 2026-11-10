@@ -56,7 +56,7 @@ class RentaCreate(_Base):
     id_cliente: int
     fecha_inicio: date
     fecha_fin_estimada: date
-    estado: Literal["Reservada", "Activa"] = "Activa"
+    estado: Literal["Solicitada", "Reservada", "Activa"] = "Activa"
     detalles: list[DetalleCreate] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -68,6 +68,17 @@ class RentaCreate(_Base):
 
 class CambioEstado(_Base):
     estado: Literal["Reservada", "Activa", "Finalizada", "Cancelada"]
+
+
+class AprobarSolicitud(_Base):
+    """El admin decide si la solicitud pasa a Reservada (apartar) o Activa
+    (entregar de inmediato)."""
+
+    estado: Literal["Reservada", "Activa"] = "Reservada"
+
+
+class RechazarSolicitud(_Base):
+    motivo: str = Field(min_length=3, max_length=500)
 
 
 class DevolucionCreate(_Base):
@@ -83,7 +94,42 @@ class PagoCreate(_Base):
     metodo_pago: METODOS_PAGO
 
 
+# ---------------------------------------------------------- Seguridad
+class LoginRequest(_Base):
+    email: EmailStr
+    password: str = Field(min_length=1, max_length=128)
+
+
+class RegistroRequest(_Base):
+    nombre: str = Field(min_length=3, max_length=100)
+    email: EmailStr
+    telefono: str | None = Field(default=None, max_length=20)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordChange(_Base):
+    actual: str = Field(min_length=1, max_length=128)
+    nueva: str = Field(min_length=8, max_length=128)
+
+
+class AccesoCliente(_Base):
+    """Alta o reactivacion de la cuenta de un cliente existente."""
+
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    nombre: str | None = Field(default=None, max_length=100)
+
+
 # ------------------------------------------------- Salida (solo docs)
+class UsuarioOut(_Base):
+    id_usuario: int
+    email: str
+    nombre: str
+    rol: str
+    id_cliente: int | None = None
+    cliente: str | None = None
+
+
 class RentaOut(_Base):
     id_renta: int
     id_cliente: int

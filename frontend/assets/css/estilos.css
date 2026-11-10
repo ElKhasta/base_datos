@@ -168,6 +168,15 @@ a {
   background-color: #fbfaff;
 }
 
+.tabla-datos tbody tr.fila-pendiente {
+  background-color: #fffbeb;
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.tabla-datos tbody tr.fila-pendiente:hover {
+  background-color: #fef3c7;
+}
+
 .acciones-tabla {
   white-space: nowrap;
 }
@@ -299,6 +308,389 @@ a {
 
 .solo-print {
   display: none;
+}
+
+/* ------------------------------ Sesión / navbar ------------------------------ */
+.avatar-nav {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.navbar-marca .badge {
+  vertical-align: 0.1em;
+  font-size: 0.65rem;
+}
+
+/* ---------------------------------- Login ---------------------------------- */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  background: #fff;
+}
+
+.auth-marca {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2.5rem;
+  padding: clamp(2rem, 5vw, 4rem);
+  color: #fff;
+  background:
+    radial-gradient(circle at 85% 12%, rgba(255, 255, 255, 0.2), transparent 32%),
+    radial-gradient(circle at 12% 88%, rgba(167, 139, 250, 0.45), transparent 38%),
+    linear-gradient(145deg, #2e1065 0%, var(--marca-oscura) 45%, var(--marca) 100%);
+}
+
+.auth-marca::after {
+  content: "";
+  position: absolute;
+  width: 26rem;
+  height: 26rem;
+  right: -10rem;
+  bottom: -11rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3.5rem rgba(255, 255, 255, 0.05),
+              0 0 0 7rem rgba(255, 255, 255, 0.035);
+  pointer-events: none;
+}
+
+.auth-marca .marca-logo {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.auth-marca h1 {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+  font-weight: 800;
+  line-height: 1.12;
+  max-width: 24ch;
+}
+
+.auth-marca .lead {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 42ch;
+}
+
+.lista-beneficios {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.lista-beneficios li {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.lista-beneficios i {
+  color: #c4b5fd;
+  margin-top: 0.15rem;
+}
+
+.auth-pie {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.8rem;
+}
+
+.auth-formulario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--fondo);
+}
+
+.auth-card {
+  width: min(27rem, 100%);
+}
+
+.auth-card .card {
+  border-radius: 1.15rem;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: #eceaf5;
+  border-radius: 0.75rem;
+}
+
+.auth-tabs button {
+  border: 0;
+  background: transparent;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.auth-tabs button.activo {
+  background: #fff;
+  color: var(--marca-oscura);
+  box-shadow: 0 2px 8px rgba(76, 29, 149, 0.12);
+}
+
+.auth-demo {
+  border: 1px dashed #d8d2ea;
+  background: #fbfaff;
+  border-radius: 0.75rem;
+  padding: 0.85rem 0.95rem;
+}
+
+.auth-demo button {
+  --bs-btn-padding-y: 0.2rem;
+  --bs-btn-padding-x: 0.5rem;
+  --bs-btn-font-size: 0.76rem;
+}
+
+@media (max-width: 991.98px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-marca {
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .auth-marca h1 {
+    font-size: 1.7rem;
+  }
+
+  .lista-beneficios {
+    display: none;
+  }
+}
+
+/* ------------------------------ Portal cliente ------------------------------ */
+.hero-cliente {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.1rem;
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  color: #fff;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(255, 255, 255, 0.2), transparent 30%),
+    linear-gradient(135deg, var(--marca-oscura), var(--marca));
+}
+
+.hero-cliente .saludo {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.9rem;
+}
+
+.hero-cliente h1 {
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 800;
+  margin: 0.15rem 0 0.4rem;
+}
+
+.hero-cliente .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.equipo-card {
+  height: 100%;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.equipo-card:hover {
+  transform: translateY(-3px);
+  border-color: #c4b5fd;
+  box-shadow: 0 0.7rem 1.5rem rgba(76, 29, 149, 0.12);
+}
+
+.equipo-card .icono-categoria {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--marca-clara);
+  color: var(--marca);
+  font-size: 1.2rem;
+}
+
+.equipo-card .precio {
+  color: var(--marca-oscura);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.equipo-card .precio small {
+  color: var(--texto-suave);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.carrito-linea {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px dashed var(--borde);
+}
+
+.carrito-linea:last-child {
+  border-bottom: 0;
+}
+
+.resumen-sticky {
+  position: sticky;
+  top: 5.2rem;
+}
+
+.tab-portal {
+  border-bottom: 1px solid var(--borde);
+  gap: 0.25rem;
+}
+
+.tab-portal .nav-link {
+  color: var(--texto-suave);
+  font-weight: 600;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.7rem 0.9rem;
+}
+
+.tab-portal .nav-link.active {
+  color: var(--marca-oscura);
+  background: transparent;
+  border-bottom-color: var(--marca);
+}
+
+.tarjeta-solicitud {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tarjeta-solicitud:hover {
+  border-color: #c4b5fd;
+  box-shadow: 0 0.5rem 1.2rem rgba(76, 29, 149, 0.08);
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.timeline li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 0.65rem;
+  position: relative;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: 0.7rem;
+  top: 1.55rem;
+  bottom: -0.9rem;
+  width: 1px;
+  background: var(--borde);
+}
+
+.timeline li:last-child::before {
+  display: none;
+}
+
+.timeline .punto {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  background: var(--marca-clara);
+  color: var(--marca-oscura);
+  z-index: 1;
+}
+
+/* ------------------------------- Actividad ------------------------------- */
+.feed-item {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f0eef7;
+}
+
+.feed-item:last-child {
+  border-bottom: 0;
+}
+
+.feed-icono {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--marca-clara);
+  color: var(--marca-oscura);
+  font-size: 0.95rem;
+}
+
+.accion-chip {
+  display: inline-block;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.72rem;
+  background: #f4f2fb;
+  border: 1px solid #e7e2f6;
+  color: #5b21b6;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
 }
 
 /* -------------------------------- Impresión -------------------------------- */

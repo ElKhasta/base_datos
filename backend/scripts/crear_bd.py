@@ -13,6 +13,7 @@ Tambien se puede automatizar con variables de entorno:
 """
 import getpass
 import os
+import secrets
 import sys
 from pathlib import Path
 from urllib.parse import quote_plus
@@ -87,10 +88,19 @@ def main() -> int:
             cur.execute("SELECT id_equipo, nombre, stock, disponible FROM v_equipo_disponible ORDER BY id_equipo")
             filas = cur.fetchall()
 
-    # 3. Escribir .env
+    # 3. Escribir .env (incluye una clave de sesion aleatoria)
     RUTA_ENV.write_text(
         f"DATABASE_URL={url}\n"
-        "CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000\n",
+        "CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000\n"
+        f"SECRET_KEY={secrets.token_urlsafe(48)}\n"
+        "SESSION_HORAS=8\n"
+        "COOKIE_SECURE=false\n"
+        "SEMBRAR_USUARIOS=true\n"
+        "ADMIN_EMAIL=admin@rentavisual.mx\n"
+        "ADMIN_PASSWORD=Admin123!\n"
+        "DEMO_CLIENTE_ID=1\n"
+        "DEMO_CLIENTE_EMAIL=luis@rentavisual.mx\n"
+        "DEMO_CLIENTE_PASSWORD=Cliente123!\n",
         encoding="utf-8",
     )
 
@@ -99,6 +109,10 @@ def main() -> int:
     for id_equipo, nombre, stock, disponible in filas:
         print(f"   [{id_equipo}] {nombre:<32} stock={stock:<3} disponible={disponible}")
     print(f"\nConfiguracion guardada en {RUTA_ENV}")
+    print("Usuarios iniciales (se crean al arrancar la API):")
+    print("   Admin   : admin@rentavisual.mx / Admin123!")
+    print("   Cliente : luis@rentavisual.mx  / Cliente123!")
+    print("   (cambia estas contrasenas fuera del entorno de demostracion)")
     print("Ahora ejecuta:   uvicorn app.main:app --reload")
     return 0
 

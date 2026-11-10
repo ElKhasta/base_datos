@@ -7,22 +7,30 @@ código y para que el diseño se pueda cambiar sin tocar el backend.
 
 ```
 frontend/
-├── index.html            Panel general (métricas y últimos movimientos)
-├── clientes.html         CRUD de clientes + historial
+├── login.html            Iniciar sesión / registrarse (pantalla completa)
+├── index.html            Panel general (métricas, avisos y actividad)
+├── solicitudes.html      Bandeja de solicitudes: aprobar / rechazar (admin)
+├── clientes.html         CRUD de clientes + historial + acceso al portal
 ├── equipos.html          Inventario + categorías
 ├── rentas.html           Proceso central: renta, pagos y devoluciones
 ├── reportes.html         7 reportes con JOIN / filtros / GROUP BY
+├── actividad.html        Bitácora de auditoría (admin)
+├── portal.html           Portal del cliente: catálogo, carrito e historial
 └── assets/
     ├── css/estilos.css   Identidad visual (lo que se personaliza)
     └── js/
         ├── api.js        Cliente HTTP: todos los endpoints en un solo lugar
-        ├── comun.js      Navbar, footer, toasts, formatos y helpers
+        ├── comun.js      Sesión, navbar por rol, guards, toasts y helpers
         └── paginas/      Un archivo por pantalla
+            ├── login.js
             ├── inicio.js
+            ├── solicitudes.js
             ├── clientes.js
             ├── equipos.js
             ├── rentas.js
-            └── reportes.js
+            ├── reportes.js
+            ├── actividad.js
+            └── portal.js
 ```
 
 ---
@@ -75,6 +83,45 @@ quieres datos reales.
 
 ---
 
+## Sesión y roles
+
+La sesión vive en una cookie `HttpOnly` (`rv_sesion`). El front **no** guarda
+tokens ni usuarios en `localStorage`: al cargar cualquier página, `comun.js`
+pregunta a `/api/auth/yo` quién eres.
+
+```js
+Comun.listo.then((sesion) => {
+  // sesion = { id_usuario, nombre, rol, id_cliente, ... } o null (redirigiendo)
+  if (!sesion) return;
+  // ...
+});
+```
+
+- Si no hay sesión y la página no es `login.html`, redirige a `login.html`.
+- `login.html` manda al admin a `index.html` y al cliente a `portal.html`.
+- El navbar se arma según `sesion.rol`; el cliente no ve los enlaces de admin
+  ni el enlace a `/docs`.
+- **Los permisos reales están en FastAPI.** Ocultar un botón es solo
+  presentación; si alguien llama la API con el rol equivocado, recibe 403.
+
+### Guards declarativos
+
+| Atributo en `<body>` | Efecto |
+|---|---|
+| `data-solo-admin="true"` | Si el rol no es `admin`, redirige a `portal.html` |
+| `data-solo-cliente="true"` | Si el rol no es `cliente`, redirige a `index.html` |
+
+Así se declaran las pantallas de admin y el portal del cliente. Para una página
+nueva, agrega el atributo que corresponda.
+
+### Sesión en `api.js`
+
+`Api` envía `credentials: "include"` en todas las llamadas. Si el backend
+responde 401 y no estás en `login.html`, limpia y redirige al login. No hay que
+manejar el 401 en cada pantalla.
+
+---
+
 ## La capa compartida
 
 ### `api.js` — un método por endpoint
@@ -96,7 +143,11 @@ método al objeto correspondiente; no llames `fetch` desde las páginas.
 
 | Función | Para qué |
 |---|---|
-| `Comun.montarLayout()` | Inyecta navbar y footer (se ejecuta sola) |
+| `Comun.listo` | Promesa que resuelve con la sesión (`/auth/yo`) o `null` si redirige |
+| `Comun.esAdmin()` / `Comun.esCliente()` | Rol de la sesión actual |
+| `Comun.rutaInicio()` | `index.html` para admin, `portal.html` para cliente |
+| `Comun.actualizarBadge()` | Refresca el contador de solicitudes del navbar |
+| `Comun.abrirPassword()` | Abre el modal para cambiar la contraseña |
 | `Comun.toast(msg, tipo)` | Aviso flotante (`success`, `danger`, `warning`, `info`) |
 | `Comun.error(e)` | Toast rojo con el mensaje del backend + `console.error` |
 | `Comun.confirmar({...})` | Diálogo de confirmación que devuelve `true`/`false` |
@@ -105,13 +156,15 @@ método al objeto correspondiente; no llames `fetch` desde las páginas.
 | `Comun.fechaHora(iso)` | Fecha y hora local |
 | `Comun.hoyISO()` / `sumarDias()` / `diasEntre()` | Fechas para el formulario de renta |
 | `Comun.escapar(texto)` | Escapa HTML antes de inyectarlo |
-| `Comun.badgeEstado(estado)` | Badge con el color de cada estado |
+| `Comun.etiquetaRol(rol)` | `admin` → `Administrador`, `cliente` → `Cliente` |
+| `Comun.badgeEstado(estado)` | Badge con el color de cada estado (incluye `Solicitada`) |
 | `Comun.filaCargando()` / `filaVacia()` | Filas estándar para las tablas |
 | `Comun.debounce(fn, ms)` | Retrasa la búsqueda mientras se escribe |
 | `Comun.llenarSelect(select, opciones)` | Rellena un `<select>` conservando el valor |
 
 Cada página se identifica con `<body data-pagina="clientes">`: así el navbar
-marca la pestaña activa.
+marca la pestaña activa. Para las pantallas exclusivas se agrega
+`data-solo-admin` o `data-solo-cliente`.
 
 ---
 
@@ -141,10 +194,17 @@ Clases propias que conviene conocer:
 | Clase | Dónde se usa |
 |---|---|
 | `.navbar-marca` | Barra superior con degradado |
+| `.auth-*` | Pantalla de login a dos columnas (marca + formulario) |
 | `.encabezado-pagina` | Título + subtítulo + botones de cada pantalla |
 | `.tarjeta-metrica` | Tarjetas de números del panel |
 | `.tarjeta-accion` | Accesos rápidos del panel |
+| `.equipo-card` | Tarjeta de equipo del catálogo del cliente |
+| `.icono-categoria` | Círculo con el icono de cada categoría |
 | `.tabla-datos` | Tablas de todas las pantallas |
+| `.fila-pendiente` | Resalta solicitudes por aprobar en tablas |
+| `.tarjeta-solicitud` | Tarjeta de una solicitud en el portal del cliente |
+| `.timeline` | Línea de seguimiento (solicitud → aprobación → cierre) |
+| `.feed`, `.feed-item`, `.feed-icono` | Bitácora de actividad del panel y de `actividad.html` |
 | `.badge-estado`, `.badge-suave` | Etiquetas de estado y categoría |
 | `.barra` | Barras horizontales de los reportes (sin librerías) |
 | `.resumen-total` | Bloque del total en el carrito de renta |
@@ -161,10 +221,12 @@ Para reemplazar el logo o la tipografía: el navbar se genera en `comun.js`
 
 1. Copia la estructura de `clientes.html` (head, `<div id="app-navbar">`,
    `<main>`, `<div id="app-footer">`, scripts al final).
-2. Ponle `data-pagina="mipagina"` al `<body>` y agrega la entrada en el arreglo
-   `PAGINAS` de `comun.js` para que aparezca en el menú.
+2. Ponle `data-pagina="mipagina"` al `<body>`, el guard que corresponda
+   (`data-solo-admin="true"` o `data-solo-cliente="true"`) y agrega la entrada
+   en el arreglo `PAGINAS_ADMIN` o `PAGINAS_CLIENTE` de `comun.js` para que
+   aparezca en el menú.
 3. Crea `assets/js/paginas/mipagina.js` y agrega los métodos que falten en
-   `api.js`.
+   `api.js`. Si necesitas la sesión, espera `Comun.listo.then(...)`.
 4. Reutiliza `Comun.filaCargando()`, `Comun.filaVacia()`, `Comun.toast()` y
    `Comun.confirmar()`: así se ve y se comporta igual que el resto.
 
@@ -174,14 +236,19 @@ Para reemplazar el logo o la tipografía: el navbar se genera en `comun.js`
 
 | Pantalla | Endpoints principales |
 |---|---|
-| Panel (`index.html`) | `/salud`, `/reportes/resumen`, `/rentas`, `/equipos`, `/reportes/rentas-vencidas` |
-| Clientes | `/clientes`, `/reportes/historial-cliente/{id}` |
+| Login (`login.html`) | `/auth/login`, `/auth/registro`, `/auth/yo` |
+| Panel (`index.html`) | `/salud`, `/reportes/resumen`, `/rentas`, `/equipos`, `/reportes/rentas-vencidas`, `/rentas/pendientes/conteo`, `/auditoria` |
+| Solicitudes (`solicitudes.html`) | `/rentas`, `/rentas/{id}`, `/rentas/{id}/aprobar`, `/rentas/{id}/rechazar` |
+| Clientes | `/clientes`, `/clientes/{id}/acceso`, `/reportes/historial-cliente/{id}` |
 | Equipos | `/equipos`, `/categorias` |
-| Rentas | `/rentas`, `/rentas/{id}`, `/rentas/{id}/pagos`, `/rentas/{id}/devoluciones`, `/estados` |
+| Rentas | `/rentas`, `/rentas/{id}`, `/rentas/{id}/pagos`, `/rentas/{id}/devoluciones`, `/rentas/{id}/aprobar`, `/estados` |
+| Portal (`portal.html`) | `/equipos`, `/categorias`, `/rentas`, `/rentas/{id}`, `/rentas/{id}/cancelar` |
+| Actividad (`actividad.html`) | `/auditoria`, `/auditoria/acciones` |
 | Reportes | `/reportes/*` |
 
 Enlaces profundos útiles: `rentas.html?nueva=1`, `rentas.html?detalle=7`,
-`reportes.html#vencidas`, `reportes.html#inventario`.
+`reportes.html#vencidas`, `reportes.html#inventario`,
+`portal.html#mis-solicitudes`.
 
 ---
 
@@ -200,8 +267,12 @@ Enlaces profundos útiles: `rentas.html?nueva=1`, `rentas.html?detalle=7`,
 
 ## Antes de entregar
 
-- [ ] El sitio abre en `http://localhost:8000/` con la base real.
-- [ ] La consola del navegador no muestra errores en ninguna de las 5 pantallas.
+- [ ] El sitio abre en `http://localhost:8000/` y redirige al login sin sesión.
+- [ ] Se puede entrar como admin y como cliente con las cuentas demo.
+- [ ] El cliente solo ve su portal; no puede abrir `clientes.html` ni `reportes.html`.
+- [ ] Un cliente envía una solicitud, el admin la aprueba y el stock baja.
+- [ ] El cliente cancela una solicitud pendiente y el admin ve el cambio.
+- [ ] La consola del navegador no muestra errores en ninguna pantalla.
 - [ ] Se puede crear una renta, abonar, devolver todo y verla finalizada.
 - [ ] Los 7 reportes muestran datos y el botón Imprimir genera una hoja limpia.
 - [ ] El diseño se ve bien en celular (el navbar colapsa y las tablas hacen scroll).

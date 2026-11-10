@@ -77,7 +77,7 @@ function pintarListado() {
   tablaRentas.innerHTML = rentas.map((r) => {
     const saldo = saldoDe(r);
     return `
-      <tr>
+      <tr class="${r.estado === "Solicitada" ? "fila-pendiente" : ""}">
         <td>
           <a href="#" class="fw-semibold" data-accion="detalle" data-id="${r.id_renta}">#${r.id_renta}</a>
         </td>
@@ -386,6 +386,12 @@ function pintarDetalle() {
   const pendientes = r.detalles.filter((d) => !d.fecha_devolucion);
   const pagadoCompleto = saldo <= 0;
 
+  // Una solicitud todavía no es una renta: no se cobra ni se devuelve nada.
+  const esSolicitud = r.estado === "Solicitada";
+  const cerrada = r.estado === "Cancelada";
+  const puedeCobrar = !esSolicitud && !cerrada && !pagadoCompleto;
+  const puedeDevolver = !esSolicitud && !cerrada && pendientes.length > 0;
+
   const filasDetalle = r.detalles.map((d) => {
     const pendiente = !d.fecha_devolucion;
     return `
@@ -422,6 +428,53 @@ function pintarDetalle() {
     .map((e) => `<option value="${e}" ${e === r.estado ? "selected" : ""}>${e}</option>`)
     .join("");
 
+  const avisoSolicitud = esSolicitud
+    ? `<div class="alert alert-warning">
+         <div class="fw-semibold mb-1"><i class="bi bi-hourglass-split me-1"></i>Solicitud pendiente de aprobación</div>
+         <p class="small mb-2">
+           Todavía no aparta inventario. Al aprobar, el servidor revalida la disponibilidad
+           antes de reservar o entregar los equipos.
+         </p>
+         <div class="d-flex flex-wrap gap-2">
+           <button class="btn btn-sm btn-outline-primary" data-accion="aprobar" data-estado="Reservada">
+             <i class="bi bi-bookmark-check me-1"></i>Aprobar y reservar
+           </button>
+           <button class="btn btn-sm btn-success" data-accion="aprobar" data-estado="Activa">
+             <i class="bi bi-check2-circle me-1"></i>Aprobar y entregar
+           </button>
+           <a class="btn btn-sm btn-outline-danger" href="solicitudes.html">
+             <i class="bi bi-x-circle me-1"></i>Rechazar en la bandeja
+           </a>
+         </div>
+       </div>`
+    : "";
+
+  const avisoCierre = cerrada && r.motivo_rechazo
+    ? `<div class="alert alert-secondary">
+         <strong>Motivo:</strong> ${escapar(r.motivo_rechazo)}
+       </div>`
+    : "";
+
+  const seguimientoAprobacion = r.fecha_aprobacion
+    ? `<div class="small text-muted mt-2">
+         ${esSolicitud ? "" : "Aprobada"} ${fechaHora(r.fecha_aprobacion)}
+         ${r.aprobador ? ` por ${escapar(r.aprobador)}` : ""}
+       </div>`
+    : "";
+
+  const zonaEstado = esSolicitud
+    ? `<div class="alert alert-light border mb-0 small">
+         <i class="bi bi-info-circle me-1"></i>
+         Esta renta nació como solicitud. Para moverla a <strong>Reservada</strong> o
+         <strong>Activa</strong> usa los botones de aprobación de arriba; el cambio
+         genérico de estado no revalida el inventario.
+       </div>`
+    : `<label class="form-label" for="detalleEstado">Cambiar estado</label>
+       <div class="input-group mb-3">
+         <select class="form-select" id="detalleEstado">${opcionesEstado}</select>
+         <button class="btn btn-outline-primary" data-accion="cambiar-estado">Aplicar</button>
+       </div>`;
+
   detalleContenido.innerHTML = `
     <div class="d-flex justify-content-between align-items-start mb-3">
       <div>
@@ -430,6 +483,9 @@ function pintarDetalle() {
       </div>
       ${badgeEstado(r.estado)}
     </div>
+
+    ${avisoSolicitud}
+    ${avisoCierre}
 
     <dl class="row dato-detalle mb-2">
       <div class="col-6">
@@ -453,6 +509,7 @@ function pintarDetalle() {
         <dd class="${pagadoCompleto ? "text-success" : "text-danger"} fw-semibold">${dinero(saldo)}</dd>
       </div>
     </dl>
+    ${seguimientoAprobacion}
 
     <h6 class="text-uppercase text-muted small fw-bold mt-4">Equipos</h6>
     <div class="table-responsive">
@@ -482,34 +539,34 @@ function pintarDetalle() {
       : '<p class="text-muted small">Todavía no se ha registrado ningún pago.</p>'}
 
     <div class="d-flex flex-wrap gap-2 mt-4">
-      <button class="btn btn-success" data-accion="pagar" ${pagadoCompleto ? "disabled" : ""}>
+      <button class="btn btn-success" data-accion="pagar" ${puedeCobrar ? "" : "disabled"}>
         <i class="bi bi-cash-coin me-1"></i>Registrar pago
       </button>
       <button class="btn btn-outline-primary" data-accion="devolver-seleccion"
-              ${pendientes.length ? "" : "disabled"}>
+              ${puedeDevolver ? "" : "disabled"}>
         <i class="bi bi-check2-square me-1"></i>Devolver seleccionados
       </button>
       <button class="btn btn-outline-secondary" data-accion="devolver-todo"
-              ${pendientes.length ? "" : "disabled"}>
+              ${puedeDevolver ? "" : "disabled"}>
         <i class="bi bi-box-arrow-in-down me-1"></i>Devolver todo
       </button>
     </div>
-    ${pendientes.length
+    ${esSolicitud
       ? `<p class="text-muted small mt-2 mb-0">
-           Marca las casillas para devolver solo algunas líneas, o usa “Devolver todo”.
-           Al no quedar pendientes, la renta pasa a <strong>Finalizada</strong> automáticamente.
+           Los pagos y las devoluciones se habilitan cuando la solicitud se aprueba.
          </p>`
-      : ""}
+      : pendientes.length
+        ? `<p class="text-muted small mt-2 mb-0">
+             Marca las casillas para devolver solo algunas líneas, o usa “Devolver todo”.
+             Al no quedar pendientes, la renta pasa a <strong>Finalizada</strong> automáticamente.
+           </p>`
+        : ""}
 
     <hr class="my-4" />
 
     <div class="card border">
       <div class="card-body">
-        <label class="form-label" for="detalleEstado">Cambiar estado</label>
-        <div class="input-group mb-3">
-          <select class="form-select" id="detalleEstado">${opcionesEstado}</select>
-          <button class="btn btn-outline-primary" data-accion="cambiar-estado">Aplicar</button>
-        </div>
+        ${zonaEstado}
         <button class="btn btn-outline-danger w-100" data-accion="eliminar">
           <i class="bi bi-trash me-1"></i>Eliminar renta
         </button>
@@ -524,6 +581,25 @@ detalleContenido.addEventListener("click", async (evento) => {
   const idRenta = detalleActual.id_renta;
 
   try {
+    /* --------------------------- Aprobar solicitud --------------------------- */
+    if (boton.dataset.accion === "aprobar") {
+      const nuevoEstado = boton.dataset.estado || "Reservada";
+      const ok = await confirmar({
+        titulo: `Aprobar la solicitud #${idRenta}`,
+        texto: `La renta pasará a <strong>${nuevoEstado}</strong>.
+                El servidor revalidará la disponibilidad antes de apartar el inventario.`,
+        boton: "Aprobar",
+      });
+      if (!ok) return;
+
+      await Api.rentas.aprobar(idRenta, nuevoEstado);
+      toast(`Solicitud #${idRenta} aprobada como ${nuevoEstado}`);
+      Comun.actualizarBadge();
+      await cargar();
+      await abrirDetalle(idRenta);
+      return;
+    }
+
     /* ------------------------------ Pago ------------------------------ */
     if (boton.dataset.accion === "pagar") {
       const saldo = saldoDe(detalleActual);
