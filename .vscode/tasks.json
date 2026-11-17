@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Instalar dependencias",
+      "type": "shell",
+      "command": "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\\.venv\\Scripts\\Activate.ps1; python -m pip install -r requirements.txt",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": [],
+      "detail": "Solo la primera vez (o cuando cambie requirements.txt)"
+    },
+    {
+      "label": "2. Crear base de datos y .env",
+      "type": "shell",
+      "command": "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\\.venv\\Scripts\\Activate.ps1; python scripts/crear_bd.py",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": [],
+      "detail": "CUIDADO: vuelve a cargar el esquema (empieza con DROP). No ejecutar sobre datos reales"
+    },
+    {
+      "label": "3. Iniciar API (uvicorn --reload)",
+      "type": "shell",
+      "command": "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\\.venv\\Scripts\\Activate.ps1; uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "isBackground": true,
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": {
+        "owner": "uvicorn",
+        "fileLocation": ["relative", "${workspaceFolder}/backend"],
+        "pattern": { "regexp": "^(.*)$", "message": 1 },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Started server process|Waiting for application startup",
+          "endsPattern": "Application startup complete|Uvicorn running on"
+        }
+      },
+      "detail": "Ctrl+Shift+B. Deja esta terminal abierta; Ctrl+C para detener"
+    },
+    {
+      "label": "4. Prueba de humo de la API",
+      "type": "shell",
+      "command": "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\\.venv\\Scripts\\Activate.ps1; python scripts/prueba_api.py",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "detail": "Requiere la API arriba (tarea 3). Crea y limpia una renta de prueba"
+    },
+    {
+      "label": "5. Abrir sitio en el navegador",
+      "type": "shell",
+      "command": "Start-Process \"http://localhost:8000\"",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "detail": "Abre el login. Usa siempre localhost, nunca 127.0.0.1 en el navegador"
+    }
+  ]
+}

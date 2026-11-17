@@ -319,7 +319,7 @@ Valores: `Reservada`, `Activa`, `Finalizada`, `Cancelada`.
 
 > Este cambio es administrativo y **no** revalida stock. Para pasar una
 > `Solicitada` a `Reservada`/`Activa` hay que usar `/aprobar`; el backend
-> responde 400 si se intenta por aquí.
+> responde `409` si se intenta por aquí (conflicto de estado).
 
 ### `POST /rentas/{id}/devoluciones`
 ```json

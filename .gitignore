@@ -7,7 +7,12 @@ __pycache__/
 backend/.env
 
 # Editores / sistema
-.vscode/
+# Sí compartimos la configuración de VS Code para que todos arranquen igual.
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 Thumbs.db
 desktop.ini

@@ -12,8 +12,16 @@ base_datos/
 ├── backend/          API en Python (FastAPI + psycopg)
 ├── frontend/         Sitio web (Bootstrap + JS)
 ├── sql/              Esquema, datos, consultas y prueba del proceso
-└── docs/             Contrato de la API y documentación
+├── docs/             Manuales y contratos (incluye la guía de VS Code)
+├── scripts/          Generador de la documentación completa
+├── .vscode/          Tareas y depuración listas para usar
+└── DOCUMENTACION_COMPLETA.md   Todos los manuales en un solo archivo
 ```
+
+> **Empieza aquí:** [`docs/GUIA_VSCODE.md`](docs/GUIA_VSCODE.md) explica paso a
+> paso cómo activar `Activate.ps1`, levantar la API y correr las pruebas desde
+> VS Code. Si quieres todo junto, abre
+> [`DOCUMENTACION_COMPLETA.md`](DOCUMENTACION_COMPLETA.md).
 
 > **Credenciales de demostración** (se crean con `sql/02_datos.sql`):
 >
@@ -206,6 +214,8 @@ en **`docs/ROLES.md`**.
 
 | Documento | Contenido |
 |---|---|
+| `DOCUMENTACION_COMPLETA.md` | **Todos los manuales en un solo archivo** (generado automáticamente) |
+| `docs/GUIA_VSCODE.md` | **Empieza aquí**: activar `Activate.ps1`, arrancar la API y probar desde VS Code |
 | `docs/MANUAL_DESDE_CERO.md` | **Manual para reconstruir todo desde cero**, fase por fase, con checkpoints |
 | `docs/RUTA_APRENDIZAJE.md` | Qué estudiar y en qué orden, y cómo auditar código (incluido el de una IA) |
 | `docs/MANUAL_USUARIO.md` | Manual de usuario del sitio, con capturas y solución de problemas |
